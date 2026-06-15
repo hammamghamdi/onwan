@@ -21,6 +21,67 @@ function SetupContent() {
     return text.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
   };
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        image.src = event.target?.result as string;
+      };
+
+      reader.onerror = () => {
+        reject(new Error("فشل قراءة الصورة."));
+      };
+
+      image.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / image.width);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          reject(new Error("فشل ضغط الصورة."));
+          return;
+        }
+
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("فشل تحويل الصورة."));
+              return;
+            }
+
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.[^/.]+$/, ".jpg"),
+              {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              }
+            );
+
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          0.75
+        );
+      };
+
+      image.onerror = () => {
+        reject(new Error("الملف المختار ليس صورة صالحة."));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
 
@@ -37,16 +98,19 @@ function SetupContent() {
     const urls: string[] = [];
 
     for (const photo of photos) {
-      const fileExt = photo.name.split(".").pop();
+      const compressedPhoto = await compressImage(photo);
+
       const fileName = `${name}-${Date.now()}-${Math.random()
         .toString(36)
-        .slice(2)}.${fileExt}`;
+        .slice(2)}.jpg`;
 
       const filePath = `${name}/${fileName}`;
 
       const { error } = await supabase.storage
         .from("address-photos")
-        .upload(filePath, photo);
+        .upload(filePath, compressedPhoto, {
+          contentType: "image/jpeg",
+        });
 
       if (error) {
         throw error;
@@ -187,7 +251,7 @@ function SetupContent() {
         />
 
         <p className="mb-4 text-sm text-black">
-          يجب رفع صورة واحدة على الأقل، والحد الأعلى 3 صور.
+          يجب رفع صورة واحدة على الأقل، والحد الأعلى 3 صور. سيتم ضغط الصور تلقائيًا قبل الرفع.
         </p>
 
         {photos.length > 0 && (
@@ -227,7 +291,7 @@ function SetupContent() {
           disabled={saving}
           className="w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
         >
-          {saving ? "جاري الحفظ..." : "حفظ بيانات العنوان"}
+          {saving ? "جاري الضغط والحفظ..." : "حفظ بيانات العنوان"}
         </button>
       </div>
     </main>
