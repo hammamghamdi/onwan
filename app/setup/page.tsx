@@ -164,9 +164,11 @@ function SetupContent() {
 
     try {
       const photoUrls = await uploadPhotos();
+      const ownerToken = crypto.randomUUID();
 
       const { error } = await supabase.from("profiles").insert({
         username: name,
+        owner_token: ownerToken,
         city: city.trim(),
         map_url: cleanedMapUrl,
 
@@ -191,7 +193,7 @@ function SetupContent() {
         return;
       }
 
-      router.push(`/success?name=${name}`);
+      router.push(`/success?name=${name}&token=${ownerToken}`);
     } catch (error) {
       console.log(error);
       setMessage("حدث خطأ أثناء رفع الصور.");

@@ -5,18 +5,32 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 function SuccessContent() {
-const searchParams = useSearchParams();
-  const name = searchParams.get("name") || "";
-  const [copied, setCopied] = useState(false);
+  const searchParams = useSearchParams();
 
-const addressUrl =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/${name}`
-    : `/${name}`;
+  const name = searchParams.get("name") || "";
+  const token = searchParams.get("token") || "";
+
+  const [copied, setCopied] = useState(false);
+  const [manageCopied, setManageCopied] = useState(false);
+
+  const addressUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${name}`
+      : `/${name}`;
+
+  const manageUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/manage?token=${token}`
+      : `/manage?token=${token}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(addressUrl);
     setCopied(true);
+  };
+
+  const copyManageLink = async () => {
+    await navigator.clipboard.writeText(manageUrl);
+    setManageCopied(true);
   };
 
   const whatsappText = encodeURIComponent(
@@ -34,7 +48,7 @@ const addressUrl =
           يمكنك الآن نسخ الرابط أو مشاركته مباشرة.
         </p>
 
-        <div className="mb-6 rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black">
+        <div className="mb-6 rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black break-all">
           {addressUrl}
         </div>
 
@@ -45,9 +59,31 @@ const addressUrl =
           {copied ? "تم نسخ الرابط" : "نسخ الرابط"}
         </button>
 
+        <div className="mb-6 rounded-2xl border-2 border-yellow-400 bg-yellow-50 p-4 text-right">
+          <p className="mb-2 font-bold text-black">
+            رابط إدارة العنوان
+          </p>
+
+          <p className="mb-3 text-sm text-black">
+            احتفظ بهذا الرابط في مكان آمن، فمن خلاله ستتمكن من تعديل العنوان والصور لاحقاً.
+          </p>
+
+          <div className="break-all rounded-xl bg-white p-3 text-sm text-black">
+            {manageUrl}
+          </div>
+        </div>
+
+        <button
+          onClick={copyManageLink}
+          className="mb-4 w-full rounded-xl border border-black py-4 font-bold text-black"
+        >
+          {manageCopied ? "تم نسخ رابط الإدارة" : "نسخ رابط الإدارة"}
+        </button>
+
         <a
           href={`https://wa.me/?text=${whatsappText}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="mb-4 block w-full rounded-xl bg-black py-4 font-bold text-white"
         >
           مشاركة عبر واتساب
@@ -63,6 +99,7 @@ const addressUrl =
     </main>
   );
 }
+
 export default function SuccessPage() {
   return (
     <Suspense>
