@@ -35,7 +35,7 @@ function SetupContent() {
       };
 
       image.onload = () => {
-        const maxWidth = 1200;
+        const maxWidth = 900;
         const scale = Math.min(1, maxWidth / image.width);
 
         const canvas = document.createElement("canvas");
@@ -70,7 +70,7 @@ function SetupContent() {
             resolve(compressedFile);
           },
           "image/jpeg",
-          0.75
+          0.6
         );
       };
 
