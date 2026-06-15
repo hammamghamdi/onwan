@@ -5,7 +5,7 @@ import { Suspense, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 function SetupContent() {
-const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const name = searchParams.get("name") || "";
@@ -16,6 +16,10 @@ const searchParams = useSearchParams();
   const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  const extractUrl = (text: string) => {
+    return text.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
+  };
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
@@ -59,6 +63,8 @@ const searchParams = useSearchParams();
   };
 
   const saveAddress = async () => {
+    const cleanedMapUrl = extractUrl(mapUrl);
+
     if (!name) {
       setMessage("اسم العنوان غير موجود.");
       return;
@@ -71,6 +77,11 @@ const searchParams = useSearchParams();
 
     if (!mapUrl.trim()) {
       setMessage("فضلاً أدخل رابط الخريطة.");
+      return;
+    }
+
+    if (!cleanedMapUrl) {
+      setMessage("لم يتم العثور على رابط خريطة صحيح. الصق رابط Google Maps فقط.");
       return;
     }
 
@@ -93,7 +104,7 @@ const searchParams = useSearchParams();
       const { error } = await supabase.from("profiles").insert({
         username: name,
         city: city.trim(),
-        map_url: mapUrl.trim(),
+        map_url: cleanedMapUrl,
 
         instructions_ar: instructions.trim(),
         instructions_en: instructions.trim(),
@@ -155,9 +166,13 @@ const searchParams = useSearchParams();
         <input
           value={mapUrl}
           onChange={(e) => setMapUrl(e.target.value)}
-          className="mb-4 w-full rounded-xl border p-4 text-black"
-          placeholder="الصق رابط Google Maps هنا"
+          className="mb-2 w-full rounded-xl border p-4 text-black"
+          placeholder="مثال: دبوس مثبّت https://goo.gl/maps/..."
         />
+
+        <p className="mb-4 text-sm leading-6 text-black">
+          يمكنك لصق النص كاملًا من خرائط Google، وسيتم استخراج الرابط تلقائيًا.
+        </p>
 
         <label className="mb-2 block font-bold text-black">
           صور الوصول / المدخل
@@ -217,8 +232,8 @@ const searchParams = useSearchParams();
       </div>
     </main>
   );
-  
 }
+
 export default function SetupPage() {
   return (
     <Suspense>
