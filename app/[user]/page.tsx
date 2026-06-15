@@ -38,6 +38,10 @@ export default function UserAddressPage() {
         setAddress(null);
       } else {
         setAddress(data);
+
+        await supabase.from("address_visits").insert({
+          username: user,
+        });
       }
 
       setLoaded(true);
@@ -100,6 +104,7 @@ export default function UserAddressPage() {
               <a
                 href={address.map_url}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-2xl bg-[#006b4f] px-4 py-3 text-sm font-bold text-white"
               >
                 الخريطة
@@ -139,7 +144,7 @@ export default function UserAddressPage() {
                 <button
                   type="button"
                   onClick={nextPhoto}
-                  className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-black"
+                  className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-white"
                 >
                   التالي
                 </button>
