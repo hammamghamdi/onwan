@@ -145,7 +145,7 @@ export default function UserAddressPage() {
                 <button
                   type="button"
                   onClick={nextPhoto}
-                  className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-white"
+                  className="flex-1 rounded-xl border border-black py-3 text-sm font-bold text-black"
                 >
                   التالي
                 </button>
@@ -179,18 +179,12 @@ export default function UserAddressPage() {
           </div>
         </section>
 
-        <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
-          <p className="mb-3 text-center text-sm font-bold text-black">
-            تريد صفحة وصول مثل هذه؟
-          </p>
-
-          <Link
-            href="/"
-            className="block w-full rounded-xl bg-black py-4 text-center font-bold text-white"
-          >
-            أنشئ عنوانك الخاص
-          </Link>
-        </section>
+        <Link
+          href="/"
+          className="mb-3 block w-full rounded-3xl bg-black py-5 text-center text-lg font-bold text-white shadow-sm"
+        >
+          أنشئ عنوانك الآن
+        </Link>
       </div>
     </main>
   );
