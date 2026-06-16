@@ -27,7 +27,7 @@ export default function Home() {
           </h1>
 
           <p className="mx-auto mb-10 max-w-3xl text-xl leading-9 text-gray-700">
-              لا تشرح موقعك مرتين، اجمع صور المدخل، الموقع، والتعليمات في "عنوان" واحد وشاركه مع الجميع.
+            لا تشرح موقعك مرتين، اجمع صور المدخل، الموقع، والتعليمات في "عنوان" واحد وشاركه مع الجميع.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
@@ -38,9 +38,12 @@ export default function Home() {
               احجز عنوانك مجانًا
             </Link>
 
-            <button className="rounded-full border border-gray-300 px-8 py-4 font-bold">
+            <Link
+              href="/demo1"
+              className="rounded-full border border-gray-300 px-8 py-4 font-bold"
+            >
               شاهد مثالًا
-            </button>
+            </Link>
           </div>
         </section>
 
