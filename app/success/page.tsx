@@ -27,13 +27,9 @@ function SuccessContent() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-10 text-black">
       <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 text-center shadow-sm">
-        <h1 className="mb-4 text-3xl font-bold text-black">
+        <h1 className="mb-6 text-3xl font-bold text-black">
           تم إنشاء عنوانك بنجاح
         </h1>
-
-        <p className="mb-6 text-black">
-          يمكنك الآن نسخ الرابط أو مشاركته مباشرة.
-        </p>
 
         <div className="mb-6 break-all rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black">
           {addressUrl}
