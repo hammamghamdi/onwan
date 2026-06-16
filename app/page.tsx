@@ -16,12 +16,10 @@ export default function Home() {
         </nav>
 
         <section className="py-12 text-center">
-          <p className="mb-5 text-sm font-bold text-[#006b4f]">
-            رابط واحد لكل تفاصيل الوصول
-          </p>
+          
 
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
-             عنوان واحد يجمع كل تفاصيل الوصول إليك
+            كل تفاصيل الوصول في رابط واحد
           </h1>
 
           <p className="mx-auto mb-8 max-w-2xl text-lg leading-8 text-gray-700">
