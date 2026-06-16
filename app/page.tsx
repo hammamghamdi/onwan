@@ -1,6 +1,28 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
+  useEffect(() => {
+    const trackHomepageVisit = async () => {
+      const storageKey = "onwan_homepage_visitor_id";
+      let visitorId = localStorage.getItem(storageKey);
+
+      if (!visitorId) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem(storageKey, visitorId);
+
+        await supabase.from("homepage_visits").insert({
+          visitor_id: visitorId,
+        });
+      }
+    };
+
+    trackHomepageVisit();
+  }, []);
+
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-5 text-[#1f2d2b]">
       <div className="mx-auto max-w-4xl">
@@ -16,8 +38,6 @@ export default function Home() {
         </nav>
 
         <section className="py-12 text-center">
-          
-
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
             كل تفاصيل الوصول في رابط واحد
           </h1>
@@ -44,7 +64,6 @@ export default function Home() {
           </div>
         </section>
 
-        
         <section className="py-12">
           <h2 className="mb-6 text-center text-2xl font-bold">
             بدل إرسال كل التفاصيل كل مرة
