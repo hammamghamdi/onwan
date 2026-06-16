@@ -57,13 +57,7 @@ export default function RegisterPage() {
           اختر اسم عنوانك
         </h1>
 
-        <p className="mb-8 text-center leading-7 text-gray-700">
-          سيكون رابطك بهذا الشكل:
-          <br />
-          <span dir="ltr" className="font-bold text-black">
-            onwan.vercel.app/yourname
-          </span>
-        </p>
+       
 
         <label className="mb-3 block font-bold text-black">
           اسم العنوان
