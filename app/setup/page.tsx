@@ -135,27 +135,27 @@ function SetupContent() {
     }
 
     if (!city.trim()) {
-      setMessage("فضلاً أدخل المدينة أو الحي.");
+      setMessage("أدخل المدينة أو الحي.");
       return;
     }
 
     if (!mapUrl.trim()) {
-      setMessage("فضلاً أدخل رابط الخريطة.");
+      setMessage("أدخل رابط الخريطة.");
       return;
     }
 
     if (!cleanedMapUrl) {
-      setMessage("لم يتم العثور على رابط خريطة صحيح. الصق رابط Google Maps فقط.");
+      setMessage("لم يتم العثور على رابط صحيح. الصق رابط Google Maps.");
       return;
     }
 
     if (photos.length === 0) {
-      setMessage("يجب رفع صورة واحدة على الأقل.");
+      setMessage("ارفع صورة واحدة على الأقل.");
       return;
     }
 
     if (!instructions.trim()) {
-      setMessage("فضلاً أدخل تعليمات الوصول.");
+      setMessage("أدخل تعليمات الوصول.");
       return;
     }
 
@@ -206,26 +206,26 @@ function SetupContent() {
     <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-6 text-black">
       <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-sm">
         <h1 className="mb-3 text-center text-2xl font-bold text-black">
-          إعداد بيانات العنوان
+          أضف بيانات الوصول
         </h1>
 
-        <p className="mb-6 text-center text-sm leading-6 text-black">
-          أضف بيانات الوصول والصور التي ستظهر لمن يفتح عنوانك.
+        <p className="mb-6 text-center text-sm leading-6 text-gray-700">
+          هذه البيانات ستظهر لمن يفتح عنوانك.
         </p>
 
-        <label className="mb-2 block font-bold text-black">اسم العنوان</label>
-        <input
-          value={name}
-          readOnly
-          className="mb-4 w-full rounded-xl border bg-gray-100 p-4 text-black"
-        />
+        <div className="mb-5 rounded-2xl bg-gray-100 p-4 text-center">
+          <p className="mb-1 text-xs font-bold text-gray-500">عنوانك</p>
+          <p dir="ltr" className="text-lg font-bold text-black">
+            {name}
+          </p>
+        </div>
 
         <label className="mb-2 block font-bold text-black">المدينة أو الحي</label>
         <input
           value={city}
           onChange={(e) => setCity(e.target.value)}
           className="mb-4 w-full rounded-xl border p-4 text-black"
-          placeholder="مثال: جدة - حي الصفا"
+          placeholder="مثال: الرياض - حي الملقا"
         />
 
         <label className="mb-2 block font-bold text-black">رابط الخريطة</label>
@@ -233,15 +233,15 @@ function SetupContent() {
           value={mapUrl}
           onChange={(e) => setMapUrl(e.target.value)}
           className="mb-2 w-full rounded-xl border p-4 text-black"
-          placeholder="مثال: دبوس مثبّت https://goo.gl/maps/..."
+          placeholder="الصق رابط Google Maps هنا"
         />
 
-        <p className="mb-4 text-sm leading-6 text-black">
+        <p className="mb-4 text-sm leading-6 text-gray-700">
           يمكنك لصق النص كاملًا من خرائط Google، وسيتم استخراج الرابط تلقائيًا.
         </p>
 
         <label className="mb-2 block font-bold text-black">
-          صور الوصول / المدخل
+          صور المدخل
         </label>
 
         <input
@@ -252,8 +252,8 @@ function SetupContent() {
           className="mb-2 w-full rounded-xl border p-4 text-black"
         />
 
-        <p className="mb-4 text-sm text-black">
-          يجب رفع صورة واحدة على الأقل، والحد الأعلى 3 صور. سيتم ضغط الصور تلقائيًا قبل الرفع.
+        <p className="mb-4 text-sm text-gray-700">
+          صورة واحدة على الأقل، والحد الأعلى 3 صور.
         </p>
 
         {photos.length > 0 && (
@@ -279,7 +279,7 @@ function SetupContent() {
           onChange={(e) => setInstructions(e.target.value)}
           className="mb-5 w-full rounded-xl border p-4 text-black"
           rows={4}
-          placeholder="مثال: ادخل من البوابة الرئيسية، المصعد في نهاية الممر..."
+          placeholder="مثال: ادخل من البوابة الرئيسية، ثم اتجه يمينًا..."
         />
 
         {message && (
@@ -293,7 +293,7 @@ function SetupContent() {
           disabled={saving}
           className="w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
         >
-          {saving ? "جاري الضغط والحفظ..." : "حفظ بيانات العنوان"}
+          {saving ? "جاري الحفظ..." : "إنشاء العنوان"}
         </button>
       </div>
     </main>
