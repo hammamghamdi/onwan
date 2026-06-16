@@ -14,6 +14,7 @@ function SetupContent() {
   const [mapUrl, setMapUrl] = useState("");
   const [instructions, setInstructions] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -90,7 +91,12 @@ function SetupContent() {
       return;
     }
 
+    photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+
+    const previews = selected.map((photo) => URL.createObjectURL(photo));
+
     setPhotos(selected);
+    setPhotoPreviews(previews);
     setMessage("");
   };
 
@@ -248,15 +254,15 @@ function SetupContent() {
           صورة واحدة على الأقل، والحد الأعلى 3 صور.
         </p>
 
-        {photos.length > 0 && (
+        {photoPreviews.length > 0 && (
           <div className="mb-4 grid grid-cols-3 gap-2">
-            {photos.map((photo, index) => (
+            {photoPreviews.map((preview, index) => (
               <div
                 key={index}
                 className="aspect-square overflow-hidden rounded-xl bg-gray-100"
               >
                 <img
-                  src={URL.createObjectURL(photo)}
+                  src={preview}
                   alt={`صورة ${index + 1}`}
                   className="h-full w-full object-cover"
                 />
@@ -285,7 +291,7 @@ function SetupContent() {
           disabled={saving}
           className="w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
         >
-          {saving ? "جاري الحفظ..." : "إنشاء العنوان"}
+          {saving ? "جاري تجهيز الصور..." : "إنشاء العنوان"}
         </button>
       </div>
     </main>
