@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -153,7 +154,7 @@ export default function UserAddressPage() {
           </section>
         )}
 
-        <section className="rounded-3xl bg-white p-4 shadow-sm">
+        <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-bold text-black">
             تعليمات الوصول
           </h2>
@@ -176,6 +177,19 @@ export default function UserAddressPage() {
                 <p dir="ltr">{address.instructions_bn}</p>
               )}
           </div>
+        </section>
+
+        <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
+          <p className="mb-3 text-center text-sm font-bold text-black">
+            تريد صفحة وصول مثل هذه؟
+          </p>
+
+          <Link
+            href="/"
+            className="block w-full rounded-xl bg-black py-4 text-center font-bold text-white"
+          >
+            أنشئ عنوانك الخاص
+          </Link>
         </section>
       </div>
     </main>
