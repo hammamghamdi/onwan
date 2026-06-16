@@ -27,8 +27,7 @@ export default function Home() {
           </h1>
 
           <p className="mx-auto mb-10 max-w-3xl text-xl leading-9 text-gray-700">
-            لا تشرح موقعك أكثر من مرة. اجمع الموقع، صور الوصول، وتعليمات
-            الوصول في عنوان واحد وشاركه مع أي شخص يريد الوصول إليك.
+              لا تشرح موقعك مرتين، اجمع صور المدخل، الموقع، والتعليمات في "عنوان" واحد وشاركه مع الجميع.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
