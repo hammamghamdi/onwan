@@ -13,14 +13,29 @@ type AddressVisit = {
   is_unique: boolean | null;
 };
 
+type Snapshot = {
+  homepageVisitors: number;
+  totalVisits: number;
+  uniqueVisits: number;
+  addressStats: Record<string, { total: number; unique: number }>;
+};
+
 export default function InsightsPage() {
   const [homepageVisitors, setHomepageVisitors] = useState(0);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [addressVisits, setAddressVisits] = useState<AddressVisit[]>([]);
+  const [previousSnapshot, setPreviousSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadInsights = async () => {
+      const snapshotKey = "onwan_insights_snapshot";
+      const savedSnapshot = localStorage.getItem(snapshotKey);
+
+      if (savedSnapshot) {
+        setPreviousSnapshot(JSON.parse(savedSnapshot));
+      }
+
       const { count: homepageCount } = await supabase
         .from("homepage_visits")
         .select("*", { count: "exact", head: true });
@@ -45,7 +60,6 @@ export default function InsightsPage() {
   }, []);
 
   const totalVisits = addressVisits.length;
-
   const uniqueVisits = addressVisits.filter((visit) => visit.is_unique).length;
 
   const addressStats = addressVisits.reduce<
@@ -68,6 +82,33 @@ export default function InsightsPage() {
     .sort((a, b) => b[1].total - a[1].total)
     .slice(0, 10);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const snapshotKey = "onwan_insights_snapshot";
+
+    const currentSnapshot: Snapshot = {
+      homepageVisitors,
+      totalVisits,
+      uniqueVisits,
+      addressStats,
+    };
+
+    localStorage.setItem(snapshotKey, JSON.stringify(currentSnapshot));
+  }, [loading, homepageVisitors, totalVisits, uniqueVisits, addressStats]);
+
+  const getDiff = (current: number, previous?: number) => {
+    const diff = current - (previous || 0);
+
+    if (diff <= 0) return null;
+
+    return (
+      <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+        +{diff} جديد
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <main dir="rtl" className="min-h-screen bg-[#f7f8f5] p-5 text-black">
@@ -86,6 +127,7 @@ export default function InsightsPage() {
           <p className="text-4xl font-bold text-[#006b4f]">
             {homepageVisitors}
           </p>
+          {getDiff(homepageVisitors, previousSnapshot?.homepageVisitors)}
         </div>
 
         <div className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
@@ -97,11 +139,13 @@ export default function InsightsPage() {
           <div className="rounded-3xl bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-600">زيارات العناوين</p>
             <p className="text-3xl font-bold text-[#006b4f]">{totalVisits}</p>
+            {getDiff(totalVisits, previousSnapshot?.totalVisits)}
           </div>
 
           <div className="rounded-3xl bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-600">الزوار الفريدون</p>
             <p className="text-3xl font-bold text-[#006b4f]">{uniqueVisits}</p>
+            {getDiff(uniqueVisits, previousSnapshot?.uniqueVisits)}
           </div>
         </div>
 
@@ -127,16 +171,28 @@ export default function InsightsPage() {
           <h2 className="mb-4 text-xl font-bold">الأكثر مشاهدة</h2>
 
           <div className="space-y-3">
-            {topAddresses.map(([username, stats]) => (
-              <div key={username} className="rounded-2xl bg-gray-50 p-3">
-                <p className="mb-2 font-bold">{username}</p>
+            {topAddresses.map(([username, stats]) => {
+              const previousAddressStats =
+                previousSnapshot?.addressStats?.[username];
 
-                <div className="flex items-center justify-between text-sm text-gray-700">
-                  <span>{stats.total} زيارة عامة</span>
-                  <span>{stats.unique} زائر فريد</span>
+              return (
+                <div key={username} className="rounded-2xl bg-gray-50 p-3">
+                  <p className="mb-2 font-bold">{username}</p>
+
+                  <div className="flex items-center justify-between text-sm text-gray-700">
+                    <div>
+                      <p>{stats.total} زيارة عامة</p>
+                      {getDiff(stats.total, previousAddressStats?.total)}
+                    </div>
+
+                    <div className="text-left">
+                      <p>{stats.unique} زائر فريد</p>
+                      {getDiff(stats.unique, previousAddressStats?.unique)}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>
