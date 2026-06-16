@@ -13,9 +13,9 @@ type AddressVisit = {
 };
 
 export default function InsightsPage() {
-  const [homepageVisits, setHomepageVisits] = useState(0);
+  const [homepageVisitors, setHomepageVisitors] = useState(0);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [addressVisits, setAddressVisits] = useState<AddressVisit[]>([]);
+  const [addressVisitors, setAddressVisitors] = useState<AddressVisit[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,16 +34,16 @@ export default function InsightsPage() {
         .from("address_visits")
         .select("username");
 
-      setHomepageVisits(homepageCount || 0);
+      setHomepageVisitors(homepageCount || 0);
       setProfiles(profilesData || []);
-      setAddressVisits(visitsData || []);
+      setAddressVisitors(visitsData || []);
       setLoading(false);
     };
 
     loadInsights();
   }, []);
 
-  const visitCounts = addressVisits.reduce<Record<string, number>>(
+  const visitorCounts = addressVisitors.reduce<Record<string, number>>(
     (acc, visit) => {
       acc[visit.username] = (acc[visit.username] || 0) + 1;
       return acc;
@@ -51,7 +51,7 @@ export default function InsightsPage() {
     {}
   );
 
-  const topAddresses = Object.entries(visitCounts)
+  const topAddresses = Object.entries(visitorCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
@@ -70,7 +70,9 @@ export default function InsightsPage() {
 
         <div className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-600">زوار الصفحة الرئيسية</p>
-          <p className="text-4xl font-bold text-[#006b4f]">{homepageVisits}</p>
+          <p className="text-4xl font-bold text-[#006b4f]">
+            {homepageVisitors}
+          </p>
         </div>
 
         <div className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
@@ -79,9 +81,9 @@ export default function InsightsPage() {
         </div>
 
         <div className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-600">زيارات صفحات العناوين</p>
+          <p className="text-sm text-gray-600">زوار صفحات العناوين</p>
           <p className="text-4xl font-bold text-[#006b4f]">
-            {addressVisits.length}
+            {addressVisitors.length}
           </p>
         </div>
 
@@ -104,7 +106,7 @@ export default function InsightsPage() {
         </section>
 
         <section className="rounded-3xl bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold">الأكثر زيارة</h2>
+          <h2 className="mb-4 text-xl font-bold">الأكثر مشاهدة</h2>
 
           <div className="space-y-3">
             {topAddresses.map(([username, count]) => (
@@ -113,7 +115,7 @@ export default function InsightsPage() {
                 className="flex items-center justify-between rounded-2xl bg-gray-50 p-3"
               >
                 <span className="font-bold">{username}</span>
-                <span>{count} زيارة</span>
+                <span>{count} زائر</span>
               </div>
             ))}
           </div>
