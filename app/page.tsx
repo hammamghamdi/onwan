@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 export default function Home() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-6 text-[#1f2d2b]">
@@ -7,9 +8,12 @@ export default function Home() {
         <nav className="flex items-center justify-between py-6">
           <div className="text-2xl font-bold text-[#006b4f]">عنوان</div>
 
-          <button className="rounded-full border border-[#006b4f] px-5 py-2 text-sm font-semibold text-[#006b4f]">
+          <Link
+            href="/register"
+            className="rounded-full border border-[#006b4f] px-5 py-2 text-sm font-semibold text-[#006b4f]"
+          >
             احجز عنوانك
-          </button>
+          </Link>
         </nav>
 
         {/* Hero */}
@@ -19,21 +23,21 @@ export default function Home() {
           </p>
 
           <h1 className="mb-6 text-5xl font-bold leading-tight">
-            هل تعبت من شرح موقعك كل مرة؟
+            عنوان واحد.. لكل من يبحث عنك
           </h1>
 
           <p className="mx-auto mb-10 max-w-3xl text-xl leading-9 text-gray-700">
-            اجمع موقعك، وصور المدخل، ووصف الوصول في عنوان واحد، وشاركه مع
-            المندوب أو الضيف أو أي شخص يريد الوصول إليك دون ضياع أو اتصالات متكررة.
+            لا تشرح موقعك أكثر من مرة. اجمع الموقع، صور الوصول، وتعليمات
+            الوصول في عنوان واحد وشاركه مع أي شخص يريد الوصول إليك.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-  href="/register"
-  className="rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
->
-  احجز عنوانك مجانًا
-</Link>
+              href="/register"
+              className="rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
+            >
+              احجز عنوانك مجانًا
+            </Link>
 
             <button className="rounded-full border border-gray-300 px-8 py-4 font-bold">
               شاهد مثالًا
@@ -44,24 +48,24 @@ export default function Home() {
         {/* Pain Points */}
         <section className="py-10">
           <h2 className="mb-8 text-center text-3xl font-bold">
-            هل مررت بهذا الموقف؟
+            متى تحتاج عنوان؟
           </h2>
 
           <div className="grid gap-5 md:grid-cols-2">
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              المندوب اتصل أكثر من مرة لأنه لم يجد الموقع.
+              عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              الضيف وصل للمبنى الخطأ رغم أنك أرسلت اللوكيشن.
+              عندما يصل الضيف إلى المبنى الخطأ رغم إرسال اللوكيشن.
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              الفني تأخر لأن وصف الوصول لم يكن واضحًا.
+              عندما يتأخر الفني لأن وصف الوصول غير واضح.
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              اضطررت لإعادة شرح الموقع في كل مرة.
+              عندما تضطر لإعادة شرح الموقع لكل شخص جديد.
             </div>
           </div>
         </section>
@@ -69,7 +73,7 @@ export default function Home() {
         {/* Problem + Solution */}
         <section className="mt-10 rounded-3xl border bg-white p-8 shadow-sm">
           <h2 className="mb-8 text-3xl font-bold">
-            بدل إرسال كل هذه الرسائل:
+            بدل إرسال كل هذه التفاصيل كل مرة:
           </h2>
 
           <div className="rounded-2xl bg-gray-50 p-6 leading-10 text-gray-700">
@@ -83,7 +87,7 @@ export default function Home() {
           <div className="my-10 text-center text-4xl">↓</div>
 
           <h2 className="mb-6 text-center text-4xl font-bold">
-            أرسل فقط
+            أرسل عنوانك فقط
           </h2>
 
           <div
@@ -112,7 +116,7 @@ export default function Home() {
 
             <div className="mb-4 rounded-2xl bg-gray-100 p-5">
               <div className="mb-2 text-sm font-bold text-[#006b4f]">
-                صورة المدخل
+                صور الوصول
               </div>
               <div className="flex h-20 items-center justify-center rounded-xl bg-gray-200 text-gray-500">
                 صورة توضيحية
@@ -137,8 +141,8 @@ export default function Home() {
           </h2>
 
           <p className="mx-auto max-w-3xl text-xl leading-9 text-gray-700">
-            عنوان ليس رابطًا مؤقتًا ولا رسالة واتساب. إنه عنوان رقمي شخصي
-            يمكنك الاحتفاظ به واستخدامه لسنوات، تمامًا كما تحتفظ برقم جوالك.
+            عنوان ليس رسالة مؤقتة في واتساب. إنه عنوان رقمي ثابت يمكنك الاحتفاظ
+            به واستخدامه كلما أردت مشاركة طريقة الوصول إليك.
           </p>
         </section>
 
@@ -158,7 +162,7 @@ export default function Home() {
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              تحديث بيانات الوصول دون تغيير الرابط
+              جمع الموقع والصور والتعليمات في صفحة واحدة
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
@@ -174,8 +178,8 @@ export default function Home() {
           </h2>
 
           <p className="mx-auto mb-6 max-w-2xl text-lg leading-8">
-            انتقلت من بيت إلى بيت؟ غيّر بيانات الوصول فقط، وسيبقى عنوانك كما هو
-            دون الحاجة لإرسال رابط جديد لكل شخص.
+            تغيّرت تفاصيل الوصول؟ حدّث بيانات العنوان فقط، وشارك نفس الرابط
+            دون الحاجة لإرسال شرح جديد كل مرة.
           </p>
 
           <div
