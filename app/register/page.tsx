@@ -10,24 +10,24 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [checking, setChecking] = useState(false);
 
-  const checkAvailability = async () => {
-    const name = username.trim().toLowerCase();
+  const cleanUsername = (value: string) => {
+    return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  };
 
+  const checkAvailability = async () => {
+    const name = cleanUsername(username.trim());
+
+    setUsername(name);
     setErrorMessage("");
     setIsAvailable(null);
 
     if (!name) {
-      setErrorMessage("أدخل اسم العنوان.");
+      setErrorMessage("اكتب اسم العنوان أولًا.");
       return;
     }
 
     if (name.length < 5) {
-      setErrorMessage("يجب أن يكون اسم العنوان 5 خانات على الأقل.");
-      return;
-    }
-
-    if (!/^[a-z0-9]+$/.test(name)) {
-      setErrorMessage("يسمح فقط بالحروف الإنجليزية والأرقام بدون مسافات أو رموز.");
+      setErrorMessage("اسم العنوان يجب أن يكون 5 خانات على الأقل.");
       return;
     }
 
@@ -43,7 +43,7 @@ export default function RegisterPage() {
 
     if (error) {
       console.log(error);
-      setErrorMessage("حدث خطأ أثناء التحقق من التوفر.");
+      setErrorMessage("حدث خطأ أثناء التحقق. حاول مرة أخرى.");
       return;
     }
 
@@ -53,15 +53,19 @@ export default function RegisterPage() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-10 text-black">
       <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow-sm">
-        <h1 className="mb-4 text-center text-3xl font-bold text-black">
-          احجز عنوانك
+        <h1 className="mb-3 text-center text-3xl font-bold text-black">
+          اختر اسم عنوانك
         </h1>
 
-        <p className="mb-8 text-center text-black">
-          تحقق من توفر العنوان قبل حجزه
+        <p className="mb-8 text-center leading-7 text-gray-700">
+          سيكون رابطك بهذا الشكل:
+          <br />
+          <span dir="ltr" className="font-bold text-black">
+            onwan.vercel.app/yourname
+          </span>
         </p>
 
-        <label className="mb-3 block font-semibold text-black">
+        <label className="mb-3 block font-bold text-black">
           اسم العنوان
         </label>
 
@@ -69,17 +73,17 @@ export default function RegisterPage() {
           type="text"
           value={username}
           onChange={(e) => {
-            const value = e.target.value.toLowerCase();
+            const value = cleanUsername(e.target.value);
             setUsername(value);
             setErrorMessage("");
             setIsAvailable(null);
           }}
-          placeholder="مثال: hamam"
-          className="mb-5 w-full rounded-xl border p-4 text-black"
+          placeholder="مثال: abdullah"
+          className="mb-4 w-full rounded-xl border p-4 text-black placeholder:text-gray-400"
         />
 
-        <p className="mb-5 text-sm text-black">
-          الحد الأدنى 5 خانات — حروف إنجليزية وأرقام فقط.
+        <p className="mb-5 text-sm leading-6 text-gray-700">
+          اختر اسمًا سهلًا تقدر تشاركه مع الآخرين. الحروف الإنجليزية والأرقام فقط، والحد الأدنى 5 خانات.
         </p>
 
         <button
@@ -91,20 +95,20 @@ export default function RegisterPage() {
         </button>
 
         {errorMessage && (
-          <div className="mt-5 rounded-xl bg-red-100 p-4 text-center font-bold text-red-700 text-black">
+          <div className="mt-5 rounded-xl bg-red-100 p-4 text-center font-bold text-red-700">
             {errorMessage}
           </div>
         )}
 
         {isAvailable === true && (
           <>
-            <div className="mt-6 rounded-xl bg-green-100 p-4 text-center font-bold text-green-700 text-black">
+            <div className="mt-6 rounded-xl bg-green-100 p-4 text-center font-bold text-green-700">
               ✅ هذا العنوان متاح
             </div>
 
             <Link
               href={`/setup?name=${username.trim().toLowerCase()}`}
-              className="mt-4 block rounded-xl bg-black py-4 text-center font-bold text-black"
+              className="mt-4 block rounded-xl bg-black py-4 text-center font-bold text-white"
             >
               احجز هذا العنوان
             </Link>
@@ -112,7 +116,7 @@ export default function RegisterPage() {
         )}
 
         {isAvailable === false && (
-          <div className="mt-6 rounded-xl bg-red-100 p-4 text-center font-bold text-red-700 text-black">
+          <div className="mt-6 rounded-xl bg-red-100 p-4 text-center font-bold text-red-700">
             ❌ هذا العنوان محجوز
           </div>
         )}
