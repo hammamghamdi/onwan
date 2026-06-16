@@ -10,6 +10,48 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [checking, setChecking] = useState(false);
 
+  const reservedNames = [
+    "admin",
+    "administrator",
+    "support",
+    "help",
+    "contact",
+    "login",
+    "register",
+    "setup",
+    "success",
+    "manage",
+    "api",
+    "dashboard",
+    "onwan",
+    "official",
+    "verified",
+    "gov",
+    "government",
+    "saudi",
+    "ksa",
+    "moi",
+    "moe",
+    "moh",
+    "absher",
+    "nafath",
+    "najiz",
+    "etimad",
+    "balady",
+    "zakat",
+    "zatca",
+    "police",
+    "airport",
+    "riyadh",
+    "jeddah",
+    "makkah",
+    "madinah",
+    "mecca",
+    "medina",
+    "kaaba",
+    "haram",
+  ];
+
   const cleanUsername = (value: string) => {
     return value.toLowerCase().replace(/[^a-z0-9]/g, "");
   };
@@ -28,6 +70,16 @@ export default function RegisterPage() {
 
     if (name.length < 5) {
       setErrorMessage("اسم العنوان يجب أن يكون 5 خانات على الأقل.");
+      return;
+    }
+
+    if (!/[a-z]/.test(name)) {
+      setErrorMessage("اسم العنوان يجب أن يحتوي على حرف إنجليزي واحد على الأقل.");
+      return;
+    }
+
+    if (reservedNames.includes(name)) {
+      setErrorMessage("هذا الاسم غير متاح للاستخدام.");
       return;
     }
 
@@ -56,8 +108,6 @@ export default function RegisterPage() {
         <h1 className="mb-3 text-center text-3xl font-bold text-black">
           اختر اسم عنوانك
         </h1>
-
-       
 
         <label className="mb-3 block font-bold text-black">
           اسم العنوان
