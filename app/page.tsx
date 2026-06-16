@@ -44,29 +44,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-center text-2xl font-bold">
-            ماذا يجمع عنوانك؟
-          </h2>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-gray-50 p-5 text-center">
-              <div className="mb-2 text-2xl">📍</div>
-              <div className="font-bold">رابط الخريطة</div>
-            </div>
-
-            <div className="rounded-2xl bg-gray-50 p-5 text-center">
-              <div className="mb-2 text-2xl">📷</div>
-              <div className="font-bold">صور المدخل</div>
-            </div>
-
-            <div className="rounded-2xl bg-gray-50 p-5 text-center">
-              <div className="mb-2 text-2xl">📝</div>
-              <div className="font-bold">تعليمات الوصول</div>
-            </div>
-          </div>
-        </section>
-
+        
         <section className="py-12">
           <h2 className="mb-6 text-center text-2xl font-bold">
             بدل إرسال كل التفاصيل كل مرة
