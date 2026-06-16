@@ -209,10 +209,6 @@ function SetupContent() {
           أضف بيانات الوصول
         </h1>
 
-        <p className="mb-6 text-center text-sm leading-6 text-gray-700">
-          هذه البيانات ستظهر لمن يفتح عنوانك.
-        </p>
-
         <div className="mb-5 rounded-2xl bg-gray-100 p-4 text-center">
           <p className="mb-1 text-xs font-bold text-gray-500">عنوانك</p>
           <p dir="ltr" className="text-lg font-bold text-black">
@@ -232,13 +228,9 @@ function SetupContent() {
         <input
           value={mapUrl}
           onChange={(e) => setMapUrl(e.target.value)}
-          className="mb-2 w-full rounded-xl border p-4 text-black"
+          className="mb-4 w-full rounded-xl border p-4 text-black"
           placeholder="الصق رابط Google Maps هنا"
         />
-
-        <p className="mb-4 text-sm leading-6 text-gray-700">
-          يمكنك لصق النص كاملًا من خرائط Google، وسيتم استخراج الرابط تلقائيًا.
-        </p>
 
         <label className="mb-2 block font-bold text-black">
           صور المدخل
