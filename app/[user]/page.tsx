@@ -39,10 +39,19 @@ export default function UserAddressPage() {
         setAddress(null);
       } else {
         setAddress(data);
+const storageKey = `onwan_address_${user}`;
+let visitorId = localStorage.getItem(storageKey);
 
-        await supabase.from("address_visits").insert({
-          username: user,
-        });
+if (!visitorId) {
+  visitorId = crypto.randomUUID();
+
+  localStorage.setItem(storageKey, visitorId);
+
+  await supabase.from("address_visits").insert({
+    username: user,
+    visitor_id: visitorId,
+  });
+}
       }
 
       setLoaded(true);
