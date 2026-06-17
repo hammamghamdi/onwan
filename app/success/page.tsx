@@ -2,12 +2,23 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
 
   const name = searchParams.get("name") || "";
+  const ownerToken = searchParams.get("token") || "";
+
+  useEffect(() => {
+    if (!ownerToken || !name) return;
+
+    localStorage.setItem(
+      `onwan_owner_${name}`,
+      ownerToken
+    );
+  }, [name, ownerToken]);
+
   const [copied, setCopied] = useState(false);
 
   const addressUrl =
