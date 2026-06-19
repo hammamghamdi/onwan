@@ -30,7 +30,9 @@ export default function UserAddressPage() {
     const loadAddress = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(
+          "username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
+        )
         .eq("username", user)
         .single();
 
