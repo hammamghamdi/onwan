@@ -124,7 +124,8 @@ function SetupContent() {
         });
 
       if (error) {
-        throw error;
+        console.log("Supabase storage upload error:", error);
+        throw new Error(`تعذر رفع الصورة: ${error.message}`);
       }
 
       const { data } = supabase.storage
@@ -218,7 +219,11 @@ function SetupContent() {
       router.push(`/success?name=${name}&token=${ownerToken}`);
     } catch (error) {
       console.log(error);
-      setMessage("حدث خطأ أثناء رفع الصور.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "تعذر رفع الصورة: خطأ غير معروف."
+      );
     } finally {
       setSaving(false);
     }
