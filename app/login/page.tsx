@@ -114,7 +114,7 @@ export default function LoginPage() {
 
     if (error) {
       console.log(error);
-      setMessage("تعذر إرسال رابط الدخول. حاول مرة أخرى.");
+      setMessage(`تعذر إرسال رابط الدخول. رسالة Supabase: ${error.message}`);
       return;
     }
 
