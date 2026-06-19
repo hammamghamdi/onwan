@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -59,6 +61,7 @@ export default function LoginPage() {
       }
 
       if (user) {
+        setIsSignedIn(true);
         await connectOwnedAddresses(user.id, user.email);
       }
     };
@@ -69,6 +72,7 @@ export default function LoginPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
+        setIsSignedIn(true);
         connectOwnedAddresses(session.user.id, session.user.email);
       }
     });
@@ -159,10 +163,19 @@ export default function LoginPage() {
         <button
           onClick={sendMagicLink}
           disabled={loading}
-          className="w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
+          className="mb-4 w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
         >
           {loading ? "جاري الإرسال..." : "إرسال رابط الدخول"}
         </button>
+
+        {isSignedIn && (
+          <Link
+            href="/addresses"
+            className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
+          >
+            عرض عناويني
+          </Link>
+        )}
       </div>
     </main>
   );
