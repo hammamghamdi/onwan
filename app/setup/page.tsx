@@ -246,12 +246,10 @@ function SetupContent() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mb-2 w-full rounded-xl border p-4 text-black"
-          placeholder="للتعديل على العنوان مستقبلاً"
+          placeholder="  غير إلزامي، لكنه يتيح لك تعديل بيانات العنوان
+          مستقبلاً   "
         />
-        <p className="mb-4 text-sm leading-6 text-gray-700">
-          البريد الإلكتروني غير إلزامي، لكنه يتيح لك تعديل بيانات العنوان
-          مستقبلاً.
-        </p>
+        
 
         <label className="mb-2 block font-bold text-black">المدينة أو الحي</label>
         <input
