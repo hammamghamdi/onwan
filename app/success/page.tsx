@@ -64,9 +64,16 @@ function SuccessContent() {
 
         <Link
           href={`/${name}`}
-          className="block w-full rounded-xl border border-black py-4 font-bold text-black"
+          className="mb-4 block w-full rounded-xl border border-black py-4 font-bold text-black"
         >
           عرض العنوان
+        </Link>
+
+        <Link
+          href={`/manage?name=${name}&token=${ownerToken}`}
+          className="block w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f]"
+        >
+          تعديل العنوان
         </Link>
       </div>
     </main>
