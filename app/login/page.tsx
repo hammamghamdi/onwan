@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -12,6 +12,71 @@ export default function LoginPage() {
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
+
+  const connectOwnedAddresses = async (
+    userId: string,
+    userEmail?: string
+  ) => {
+    if (!userEmail) {
+      console.log("Authenticated user has no email.");
+      return;
+    }
+
+    const { count, error } = await supabase
+      .from("profiles")
+      .update(
+        { user_id: userId },
+        {
+          count: "exact",
+        }
+      )
+      .eq("email", userEmail.trim().toLowerCase())
+      .is("user_id", null);
+
+    if (error) {
+      console.log(error);
+      setIsSuccess(false);
+      setMessage("تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.");
+      return;
+    }
+
+    if (count && count > 0) {
+      setIsSuccess(true);
+      setMessage("تم تسجيل الدخول وربط عناوينك بهذا البريد الإلكتروني.");
+    }
+  };
+
+  useEffect(() => {
+    const connectCurrentUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      if (user) {
+        await connectOwnedAddresses(user.id, user.email);
+      }
+    };
+
+    connectCurrentUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        connectOwnedAddresses(session.user.id, session.user.email);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
