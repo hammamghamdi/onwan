@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -20,15 +21,46 @@ function SuccessContent() {
   }, [name, ownerToken]);
 
   const [copied, setCopied] = useState(false);
+  const [qrReady, setQrReady] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const addressUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/${name}`
       : `/${name}`;
 
+  useEffect(() => {
+    if (!qrCanvasRef.current || !addressUrl || !name) return;
+
+    setQrReady(false);
+
+    QRCode.toCanvas(qrCanvasRef.current, addressUrl, {
+      width: 220,
+      margin: 2,
+      color: {
+        dark: "#1f2d2b",
+        light: "#ffffff",
+      },
+    })
+      .then(() => setQrReady(true))
+      .catch((error) => {
+        console.log(error);
+        setQrReady(false);
+      });
+  }, [addressUrl, name]);
+
   const copyLink = async () => {
     await navigator.clipboard.writeText(addressUrl);
     setCopied(true);
+  };
+
+  const downloadQr = () => {
+    if (!qrCanvasRef.current) return;
+
+    const link = document.createElement("a");
+    link.href = qrCanvasRef.current.toDataURL("image/png");
+    link.download = `onwan-${name || "address"}-qr.png`;
+    link.click();
   };
 
   const whatsappText = encodeURIComponent(
@@ -45,6 +77,22 @@ function SuccessContent() {
         <div className="mb-6 break-all rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black">
           {addressUrl}
         </div>
+
+        <div className="mb-4 rounded-2xl bg-gray-100 p-4">
+          <canvas
+            ref={qrCanvasRef}
+            aria-label="QR code for public address"
+            className="mx-auto h-48 w-48 rounded-xl bg-white p-2"
+          />
+        </div>
+
+        <button
+          onClick={downloadQr}
+          disabled={!qrReady}
+          className="mb-4 w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f] disabled:opacity-60"
+        >
+          تحميل QR
+        </button>
 
         <button
           onClick={copyLink}
