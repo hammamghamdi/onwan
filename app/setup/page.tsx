@@ -146,12 +146,7 @@ function SetupContent() {
       return;
     }
 
-    if (!email.trim()) {
-      setMessage("أدخل البريد الإلكتروني.");
-      return;
-    }
-
-    if (!isValidEmail(email.trim())) {
+    if (email.trim() && !isValidEmail(email.trim())) {
       setMessage("أدخل بريدًا إلكترونيًا صحيحًا.");
       return;
     }
@@ -191,7 +186,7 @@ function SetupContent() {
       const { error } = await supabase.from("profiles").insert({
         username: name,
         owner_token: ownerToken,
-        email: email.trim().toLowerCase(),
+        email: email.trim() ? email.trim().toLowerCase() : null,
         city: city.trim(),
         map_url: cleanedMapUrl,
 
@@ -244,15 +239,19 @@ function SetupContent() {
         </div>
 
         <label className="mb-2 block font-bold text-black">
-          البريد الإلكتروني
+          البريد الإلكتروني (اختياري)
         </label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-xl border p-4 text-black"
-          placeholder="example@email.com"
+          className="mb-2 w-full rounded-xl border p-4 text-black"
+          placeholder="للتعديل على العنوان مستقبلاً"
         />
+        <p className="mb-4 text-sm leading-6 text-gray-700">
+          البريد الإلكتروني غير إلزامي، لكنه يتيح لك تعديل بيانات العنوان
+          مستقبلاً.
+        </p>
 
         <label className="mb-2 block font-bold text-black">المدينة أو الحي</label>
         <input
