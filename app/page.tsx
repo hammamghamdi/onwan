@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
     const trackHomepageVisit = async () => {
       const storageKey = "onwan_homepage_visitor_id";
@@ -20,7 +22,22 @@ export default function Home() {
       }
     };
 
+    const checkAuth = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setIsAuthenticated(Boolean(user));
+    };
+
     trackHomepageVisit();
+    checkAuth();
   }, []);
 
   return (
@@ -30,10 +47,10 @@ export default function Home() {
           <div className="text-2xl font-bold text-[#006b4f]">عنوان</div>
 
           <Link
-            href="/register"
+            href={isAuthenticated ? "/addresses" : "/login"}
             className="rounded-full border border-[#006b4f] px-5 py-2 text-sm font-semibold text-[#006b4f]"
           >
-            احجز عنوانك
+            {isAuthenticated ? "عناويني" : "دخول / عناويني"}
           </Link>
         </nav>
 
