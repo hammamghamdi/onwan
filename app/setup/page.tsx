@@ -11,6 +11,7 @@ function SetupContent() {
   const name = searchParams.get("name") || "";
 
   const [city, setCity] = useState("");
+  const [email, setEmail] = useState("");
   const [mapUrl, setMapUrl] = useState("");
   const [instructions, setInstructions] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
@@ -20,6 +21,10 @@ function SetupContent() {
 
   const extractUrl = (text: string) => {
     return text.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
+  };
+
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
   const compressImage = (file: File): Promise<File> => {
@@ -140,6 +145,16 @@ function SetupContent() {
       return;
     }
 
+    if (!email.trim()) {
+      setMessage("أدخل البريد الإلكتروني.");
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setMessage("أدخل بريدًا إلكترونيًا صحيحًا.");
+      return;
+    }
+
     if (!city.trim()) {
       setMessage("أدخل المدينة أو الحي.");
       return;
@@ -175,6 +190,7 @@ function SetupContent() {
       const { error } = await supabase.from("profiles").insert({
         username: name,
         owner_token: ownerToken,
+        email: email.trim().toLowerCase(),
         city: city.trim(),
         map_url: cleanedMapUrl,
 
@@ -221,6 +237,17 @@ function SetupContent() {
             {name}
           </p>
         </div>
+
+        <label className="mb-2 block font-bold text-black">
+          البريد الإلكتروني
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mb-4 w-full rounded-xl border p-4 text-black"
+          placeholder="example@email.com"
+        />
 
         <label className="mb-2 block font-bold text-black">المدينة أو الحي</label>
         <input
