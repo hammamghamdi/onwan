@@ -2,9 +2,72 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/lib/useLanguage";
+
+const copy = {
+  ar: {
+    brand: "عنوان",
+    accountAuthed: "عناويني",
+    accountGuest: "دخول / عناويني",
+    heroTitle: "كل تفاصيل الوصول في رابط واحد",
+    heroText:
+      "لا تشرح موقع منزلك كل مرة. أضف اللوكيشن، صور المدخل، وتعليمات الوصول في عنوان واحد وشاركه مع الجميع.",
+    mainCta: "احجز عنوانك مجانًا",
+    exampleCta: "مثال توضيحي",
+    beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
+    exampleLines: [
+      "هذا اللوكيشن",
+      "العمارة الثالثة",
+      "الدور الثاني",
+      "الشقة يمين",
+      "الباب لونه بني",
+    ],
+    needsTitle: "متى تحتاج عنوان؟",
+    needs: [
+      "عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.",
+      "عندما يصل الضيف إلى المبنى الخطأ رغم إرسال اللوكيشن.",
+      "عندما يتأخر الفني لأن وصف الوصول غير واضح.",
+      "عندما تضطر لإعادة شرح الموقع لكل شخص جديد.",
+    ],
+    finalTitle: "أنشئ عنوانك وشاركه فورًا",
+    finalText:
+      "اختر اسمًا مختصرًا، أضف بيانات الوصول، ثم شارك الرابط مع أي شخص يريد الوصول إليك.",
+  },
+  en: {
+    brand: "Onwan",
+    accountAuthed: "My Addresses",
+    accountGuest: "Login / My Addresses",
+    heroTitle: "Every arrival detail in one link",
+    heroText:
+      "Stop explaining your location again and again. Add the map link, entrance photos, and arrival instructions once, then share one address with everyone.",
+    mainCta: "Reserve your address for free",
+    exampleCta: "View example",
+    beforeTitle: "Instead of sending every detail every time",
+    exampleLines: [
+      "This is the location",
+      "Third building",
+      "Second floor",
+      "Apartment on the right",
+      "The door is brown",
+    ],
+    needsTitle: "When do you need Onwan?",
+    needs: [
+      "When a delivery driver keeps calling because they cannot find the place.",
+      "When a guest reaches the wrong building even after you shared the map pin.",
+      "When a technician is delayed because the arrival instructions are unclear.",
+      "When you have to explain the same location to every new person.",
+    ],
+    finalTitle: "Create your address and share it instantly",
+    finalText:
+      "Choose a short name, add the arrival details, then share the link with anyone who needs to reach you.",
+  },
+};
 
 export default function Home() {
+  const { language, setLanguage } = useLanguage();
+  const text = copy[language];
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -41,27 +104,33 @@ export default function Home() {
   }, []);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-5 text-[#1f2d2b]">
+    <main
+      dir={language === "en" ? "ltr" : "rtl"}
+      className="min-h-screen bg-[#f7f8f5] px-5 text-[#1f2d2b]"
+    >
       <div className="mx-auto max-w-4xl">
+        <div className="pt-5">
+          <LanguageNav language={language} setLanguage={setLanguage} />
+        </div>
+
         <nav className="flex items-center justify-between py-6">
-          <div className="text-2xl font-bold text-[#006b4f]">عنوان</div>
+          <div className="text-2xl font-bold text-[#006b4f]">{text.brand}</div>
 
           <Link
             href={isAuthenticated ? "/addresses" : "/login"}
             className="rounded-full border border-[#006b4f] px-5 py-2 text-sm font-semibold text-[#006b4f]"
           >
-            {isAuthenticated ? "عناويني" : "دخول / عناويني"}
+            {isAuthenticated ? text.accountAuthed : text.accountGuest}
           </Link>
         </nav>
 
         <section className="py-12 text-center">
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
-            كل تفاصيل الوصول في رابط واحد
+            {text.heroTitle}
           </h1>
 
           <p className="mx-auto mb-8 max-w-2xl text-lg leading-8 text-gray-700">
-            لا تشرح موقع منزلك مرتين. اضف الموقع، صور المدخل، وتعليمات الوصول في
-            عنوان واحد وشاركه مع الجميع.
+            {text.heroText}
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -69,30 +138,28 @@ export default function Home() {
               href="/register"
               className="rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
             >
-              احجز عنوانك مجانًا
+              {text.mainCta}
             </Link>
 
             <Link
               href="/abdullah"
               className="rounded-full border border-[#006b4f] bg-[#eef5f1] px-8 py-4 font-bold text-[#006b4f]"
             >
-              مثال توضيحي
+              {text.exampleCta}
             </Link>
           </div>
         </section>
 
         <section className="py-12">
           <h2 className="mb-6 text-center text-2xl font-bold">
-            بدل إرسال كل التفاصيل كل مرة
+            {text.beforeTitle}
           </h2>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <div className="rounded-2xl bg-gray-50 p-5 leading-9 text-gray-700">
-              <p>📍 هذا اللوكيشن</p>
-              <p>🏢 العمارة الثالثة</p>
-              <p>⬆️ الدور الثاني</p>
-              <p>🚪 الشقة يمين</p>
-              <p>📷 الباب لونه بني</p>
+              {text.exampleLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
 
             <div className="my-7 text-center text-3xl">↓</div>
@@ -107,42 +174,33 @@ export default function Home() {
         </section>
 
         <section className="rounded-3xl bg-[#eef5f1] p-7 text-center">
-          <h2 className="mb-4 text-2xl font-bold">متى تحتاج عنوان؟</h2>
+          <h2 className="mb-4 text-2xl font-bold">{text.needsTitle}</h2>
 
-          <div className="grid gap-3 text-right sm:grid-cols-2">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
-              عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.
-            </div>
-
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
-              عندما يصل الضيف إلى المبنى الخطأ رغم إرسال اللوكيشن.
-            </div>
-
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
-              عندما يتأخر الفني لأن وصف الوصول غير واضح.
-            </div>
-
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
-              عندما تضطر لإعادة شرح الموقع لكل شخص جديد.
-            </div>
+          <div
+            className={`grid gap-3 sm:grid-cols-2 ${
+              language === "en" ? "text-left" : "text-right"
+            }`}
+          >
+            {text.needs.map((need) => (
+              <div key={need} className="rounded-2xl bg-white p-4 shadow-sm">
+                {need}
+              </div>
+            ))}
           </div>
         </section>
 
         <section className="py-12 text-center">
-          <h2 className="mb-4 text-2xl font-bold">
-            أنشئ عنوانك وشاركه فورًا
-          </h2>
+          <h2 className="mb-4 text-2xl font-bold">{text.finalTitle}</h2>
 
           <p className="mx-auto mb-6 max-w-2xl leading-8 text-gray-700">
-            اختر اسمًا مختصرًا، أضف بيانات الوصول، ثم شارك الرابط مع أي شخص
-            يريد الوصول إليك.
+            {text.finalText}
           </p>
 
           <Link
             href="/register"
             className="inline-block rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
           >
-            احجز عنوانك مجانًا
+            {text.mainCta}
           </Link>
         </section>
       </div>

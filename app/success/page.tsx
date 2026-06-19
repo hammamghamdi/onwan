@@ -1,11 +1,40 @@
 "use client";
 
+import { LanguageNav } from "@/app/components/LanguageNav";
+import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import { Suspense, useEffect, useRef, useState } from "react";
 
+const copy = {
+  ar: {
+    title: "تم إنشاء عنوانك بنجاح",
+    qrLabel: "رمز QR للعنوان العام",
+    downloadQr: "تحميل QR",
+    copied: "تم نسخ الرابط",
+    copy: "نسخ الرابط",
+    whatsapp: "مشاركة عبر واتساب",
+    view: "عرض العنوان",
+    edit: "تعديل العنوان",
+    whatsappText: "هذا عنواني للوصول:",
+  },
+  en: {
+    title: "Your address was created successfully",
+    qrLabel: "QR code for public address",
+    downloadQr: "Download QR",
+    copied: "Link copied",
+    copy: "Copy link",
+    whatsapp: "Share on WhatsApp",
+    view: "View address",
+    edit: "Edit address",
+    whatsappText: "This is my address for arrival:",
+  },
+};
+
 function SuccessContent() {
+  const { language, setLanguage } = useLanguage();
+  const text = copy[language];
   const searchParams = useSearchParams();
 
   const name = searchParams.get("name") || "";
@@ -14,10 +43,7 @@ function SuccessContent() {
   useEffect(() => {
     if (!ownerToken || !name) return;
 
-    localStorage.setItem(
-      `onwan_owner_${name}`,
-      ownerToken
-    );
+    localStorage.setItem(`onwan_owner_${name}`, ownerToken);
   }, [name, ownerToken]);
 
   const [copied, setCopied] = useState(false);
@@ -63,16 +89,17 @@ function SuccessContent() {
     link.click();
   };
 
-  const whatsappText = encodeURIComponent(
-    `هذا عنواني للوصول:\n${addressUrl}`
-  );
+  const whatsappText = encodeURIComponent(`${text.whatsappText}\n${addressUrl}`);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-10 text-black">
+    <main
+      dir={language === "en" ? "ltr" : "rtl"}
+      className="min-h-screen bg-[#f7f8f5] px-4 py-10 text-black"
+    >
+      <LanguageNav language={language} setLanguage={setLanguage} />
+
       <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 text-center shadow-sm">
-        <h1 className="mb-6 text-3xl font-bold text-black">
-          تم إنشاء عنوانك بنجاح
-        </h1>
+        <h1 className="mb-6 text-3xl font-bold text-black">{text.title}</h1>
 
         <div className="mb-6 break-all rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black">
           {addressUrl}
@@ -81,7 +108,7 @@ function SuccessContent() {
         <div className="mb-4 rounded-2xl bg-gray-100 p-4">
           <canvas
             ref={qrCanvasRef}
-            aria-label="QR code for public address"
+            aria-label={text.qrLabel}
             className="mx-auto h-48 w-48 rounded-xl bg-white p-2"
           />
         </div>
@@ -91,14 +118,14 @@ function SuccessContent() {
           disabled={!qrReady}
           className="mb-4 w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f] disabled:opacity-60"
         >
-          تحميل QR
+          {text.downloadQr}
         </button>
 
         <button
           onClick={copyLink}
           className="mb-4 w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white"
         >
-          {copied ? "تم نسخ الرابط" : "نسخ الرابط"}
+          {copied ? text.copied : text.copy}
         </button>
 
         <a
@@ -107,21 +134,21 @@ function SuccessContent() {
           rel="noopener noreferrer"
           className="mb-4 block w-full rounded-xl bg-black py-4 font-bold text-white"
         >
-          مشاركة عبر واتساب
+          {text.whatsapp}
         </a>
 
         <Link
           href={`/${name}`}
           className="mb-4 block w-full rounded-xl border border-black py-4 font-bold text-black"
         >
-          عرض العنوان
+          {text.view}
         </Link>
 
         <Link
           href={`/manage?name=${name}&token=${ownerToken}`}
           className="block w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f]"
         >
-          تعديل العنوان
+          {text.edit}
         </Link>
       </div>
     </main>

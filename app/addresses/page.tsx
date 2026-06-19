@@ -1,9 +1,11 @@
 "use client";
 
+import { LanguageNav } from "@/app/components/LanguageNav";
+import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 type AddressProfile = {
   username: string;
@@ -11,8 +13,43 @@ type AddressProfile = {
   owner_token: string | null;
 };
 
+const copy = {
+  ar: {
+    authCheckError: "تعذر التحقق من تسجيل الدخول.",
+    loadError: "تعذر تحميل عناوينك.",
+    logoutError: "تعذر تسجيل الخروج. حاول مرة أخرى.",
+    title: "عناويني",
+    intro: "العناوين المرتبطة ببريدك الإلكتروني.",
+    loading: "جاري تحميل العناوين...",
+    loginPrompt: "سجل دخولك أولًا لعرض عناوينك.",
+    login: "تسجيل الدخول",
+    empty: "لا توجد عناوين مرتبطة بهذا الحساب حتى الآن.",
+    noCity: "لم يتم إدخال المدينة",
+    view: "عرض العنوان",
+    edit: "تعديل العنوان",
+    logout: "تسجيل الخروج",
+  },
+  en: {
+    authCheckError: "Could not verify your login.",
+    loadError: "Could not load your addresses.",
+    logoutError: "Could not log out. Try again.",
+    title: "My Addresses",
+    intro: "Addresses linked to your email.",
+    loading: "Loading addresses...",
+    loginPrompt: "Log in first to view your addresses.",
+    login: "Log In",
+    empty: "No addresses are linked to this account yet.",
+    noCity: "No city entered",
+    view: "View Address",
+    edit: "Edit Address",
+    logout: "Log Out",
+  },
+};
+
 export default function AddressesPage() {
   const router = useRouter();
+  const { language, setLanguage } = useLanguage();
+  const text = copy[language];
   const [addresses, setAddresses] = useState<AddressProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,7 +66,7 @@ export default function AddressesPage() {
 
     if (error) {
       console.log(error);
-      setMessage("تعذر تسجيل الخروج. حاول مرة أخرى.");
+      setMessage(text.logoutError);
       return;
     }
 
@@ -37,18 +74,19 @@ export default function AddressesPage() {
   };
 
   useEffect(() => {
-    const loadAddresses = async () => {
-      setLoading(true);
-      setMessage("");
+    let isMounted = true;
 
+    const loadAddresses = async () => {
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
 
+      if (!isMounted) return;
+
       if (userError) {
         console.log(userError);
-        setMessage("تعذر التحقق من تسجيل الدخول.");
+        setMessage(text.authCheckError);
         setLoading(false);
         return;
       }
@@ -59,54 +97,61 @@ export default function AddressesPage() {
         return;
       }
 
-      setIsLoggedIn(true);
-
       const { data, error } = await supabase
         .from("profiles")
         .select("username, city, owner_token")
         .eq("user_id", user.id)
         .order("username", { ascending: true });
 
+      if (!isMounted) return;
+
       if (error) {
         console.log(error);
-        setMessage("تعذر تحميل عناوينك.");
+        setMessage(text.loadError);
         setLoading(false);
         return;
       }
 
+      setIsLoggedIn(true);
+      setMessage("");
       setAddresses(data || []);
       setLoading(false);
     };
 
     loadAddresses();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [text.authCheckError, text.loadError]);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-6 text-black">
+    <main
+      dir={language === "en" ? "ltr" : "rtl"}
+      className="min-h-screen bg-[#f7f8f5] px-4 py-6 text-black"
+    >
+      <LanguageNav language={language} setLanguage={setLanguage} />
+
       <div className="mx-auto max-w-sm">
         <section className="mb-4 rounded-3xl bg-white p-5 text-center shadow-sm">
-          <h1 className="mb-3 text-2xl font-bold text-black">عناويني</h1>
-          <p className="leading-7 text-gray-700">
-            العناوين المرتبطة ببريدك الإلكتروني.
-          </p>
+          <h1 className="mb-3 text-2xl font-bold text-black">{text.title}</h1>
+          <p className="leading-7 text-gray-700">{text.intro}</p>
         </section>
 
         {loading && (
           <div className="rounded-3xl bg-white p-5 text-center font-bold shadow-sm">
-            جاري تحميل العناوين...
+            {text.loading}
           </div>
         )}
 
         {!loading && !isLoggedIn && (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
-            <p className="mb-4 font-bold text-black">
-              سجل دخولك أولًا لعرض عناوينك.
-            </p>
+            <p className="mb-4 font-bold text-black">{text.loginPrompt}</p>
             <Link
               href="/login"
               className="block w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white"
             >
-              تسجيل الدخول
+              {text.login}
             </Link>
           </section>
         )}
@@ -119,9 +164,7 @@ export default function AddressesPage() {
 
         {!loading && isLoggedIn && !message && addresses.length === 0 && (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
-            <p className="font-bold text-black">
-              لا توجد عناوين مرتبطة بهذا الحساب حتى الآن.
-            </p>
+            <p className="font-bold text-black">{text.empty}</p>
           </section>
         )}
 
@@ -139,7 +182,7 @@ export default function AddressesPage() {
                     {address.username}
                   </h2>
                   <p className="mb-3 text-gray-700">
-                    {address.city || "لم يتم إدخال المدينة"}
+                    {address.city || text.noCity}
                   </p>
                   <p dir="ltr" className="mb-4 break-all text-sm text-gray-600">
                     {publicUrl}
@@ -149,7 +192,7 @@ export default function AddressesPage() {
                     href={`/${address.username}`}
                     className="mb-3 block w-full rounded-xl bg-[#006b4f] py-4 text-center font-bold text-white"
                   >
-                    عرض العنوان
+                    {text.view}
                   </Link>
 
                   {address.owner_token && (
@@ -157,7 +200,7 @@ export default function AddressesPage() {
                       href={`/manage?name=${address.username}&token=${address.owner_token}`}
                       className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
                     >
-                      تعديل العنوان
+                      {text.edit}
                     </Link>
                   )}
                 </section>
@@ -171,7 +214,7 @@ export default function AddressesPage() {
             onClick={signOut}
             className="mt-4 w-full rounded-xl border border-black bg-white py-4 font-bold text-black shadow-sm"
           >
-            تسجيل الخروج
+            {text.logout}
           </button>
         )}
       </div>

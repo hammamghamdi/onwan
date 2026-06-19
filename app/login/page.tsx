@@ -1,10 +1,52 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/lib/useLanguage";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+
+const copy = {
+  ar: {
+    noEmail: "أدخل بريدك الإلكتروني.",
+    invalidEmail: "أدخل بريدًا إلكترونيًا صحيحًا.",
+    noUserEmail: "المستخدم المسجل لا يحتوي على بريد إلكتروني.",
+    claimError:
+      "تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.",
+    claimed:
+      "تم تسجيل الدخول وربط عناوينك بهذا البريد الإلكتروني.",
+    authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
+    sent: "تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.",
+    title: "تسجيل الدخول",
+    intro:
+      "أدخل بريدك الإلكتروني وسنرسل لك رابط دخول آمن بدون كلمة مرور.",
+    emailLabel: "البريد الإلكتروني",
+    loading: "جاري الإرسال...",
+    send: "إرسال رابط الدخول",
+    addresses: "عرض عناويني",
+  },
+  en: {
+    noEmail: "Enter your email address.",
+    invalidEmail: "Enter a valid email address.",
+    noUserEmail: "Authenticated user has no email.",
+    claimError:
+      "You are signed in, but we could not link your addresses to this email.",
+    claimed: "You are signed in and your addresses are linked to this email.",
+    authErrorPrefix: "Could not send the login link. Supabase message:",
+    sent: "Login link sent. Check your email.",
+    title: "Log In",
+    intro:
+      "Enter your email and we will send a secure login link without a password.",
+    emailLabel: "Email",
+    loading: "Sending...",
+    send: "Send Login Link",
+    addresses: "View My Addresses",
+  },
+};
 
 export default function LoginPage() {
+  const { language, setLanguage } = useLanguage();
+  const text = copy[language];
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,38 +57,38 @@ export default function LoginPage() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const connectOwnedAddresses = async (
-    userId: string,
-    userEmail?: string
-  ) => {
-    if (!userEmail) {
-      console.log("Authenticated user has no email.");
-      return;
-    }
+  const connectOwnedAddresses = useCallback(
+    async (userId: string, userEmail?: string) => {
+      if (!userEmail) {
+        console.log(text.noUserEmail);
+        return;
+      }
 
-    const { count, error } = await supabase
-      .from("profiles")
-      .update(
-        { user_id: userId },
-        {
-          count: "exact",
-        }
-      )
-      .eq("email", userEmail.trim().toLowerCase())
-      .is("user_id", null);
+      const { count, error } = await supabase
+        .from("profiles")
+        .update(
+          { user_id: userId },
+          {
+            count: "exact",
+          }
+        )
+        .eq("email", userEmail.trim().toLowerCase())
+        .is("user_id", null);
 
-    if (error) {
-      console.log(error);
-      setIsSuccess(false);
-      setMessage("تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.");
-      return;
-    }
+      if (error) {
+        console.log(error);
+        setIsSuccess(false);
+        setMessage(text.claimError);
+        return;
+      }
 
-    if (count && count > 0) {
-      setIsSuccess(true);
-      setMessage("تم تسجيل الدخول وربط عناوينك بهذا البريد الإلكتروني.");
-    }
-  };
+      if (count && count > 0) {
+        setIsSuccess(true);
+        setMessage(text.claimed);
+      }
+    },
+    [text.claimError, text.claimed, text.noUserEmail]
+  );
 
   useEffect(() => {
     const connectCurrentUser = async () => {
@@ -80,7 +122,7 @@ export default function LoginPage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [connectOwnedAddresses]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -89,12 +131,12 @@ export default function LoginPage() {
     setIsSuccess(false);
 
     if (!cleanEmail) {
-      setMessage("أدخل بريدك الإلكتروني.");
+      setMessage(text.noEmail);
       return;
     }
 
     if (!isValidEmail(cleanEmail)) {
-      setMessage("أدخل بريدًا إلكترونيًا صحيحًا.");
+      setMessage(text.invalidEmail);
       return;
     }
 
@@ -114,27 +156,32 @@ export default function LoginPage() {
 
     if (error) {
       console.log(error);
-      setMessage(`تعذر إرسال رابط الدخول. رسالة Supabase: ${error.message}`);
+      setMessage(`${text.authErrorPrefix} ${error.message}`);
       return;
     }
 
     setIsSuccess(true);
-    setMessage("تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.");
+    setMessage(text.sent);
   };
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-4 py-10 text-black">
+    <main
+      dir={language === "en" ? "ltr" : "rtl"}
+      className="min-h-screen bg-[#f7f8f5] px-4 py-6 text-black"
+    >
+      <LanguageNav language={language} setLanguage={setLanguage} />
+
       <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 shadow-sm">
         <h1 className="mb-3 text-center text-3xl font-bold text-black">
-          تسجيل الدخول
+          {text.title}
         </h1>
 
         <p className="mb-6 text-center leading-7 text-gray-700">
-          أدخل بريدك الإلكتروني وسنرسل لك رابط دخول آمن بدون كلمة مرور.
+          {text.intro}
         </p>
 
         <label className="mb-2 block font-bold text-black">
-          البريد الإلكتروني
+          {text.emailLabel}
         </label>
         <input
           type="email"
@@ -165,7 +212,7 @@ export default function LoginPage() {
           disabled={loading}
           className="mb-4 w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
         >
-          {loading ? "جاري الإرسال..." : "إرسال رابط الدخول"}
+          {loading ? text.loading : text.send}
         </button>
 
         {isSignedIn && (
@@ -173,7 +220,7 @@ export default function LoginPage() {
             href="/addresses"
             className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
           >
-            عرض عناويني
+            {text.addresses}
           </Link>
         )}
       </div>
