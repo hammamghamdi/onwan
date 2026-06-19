@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -11,6 +12,7 @@ type AddressProfile = {
 };
 
 export default function AddressesPage() {
+  const router = useRouter();
   const [addresses, setAddresses] = useState<AddressProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -20,6 +22,18 @@ export default function AddressesPage() {
     return typeof window !== "undefined"
       ? `${window.location.origin}/${username}`
       : `/${username}`;
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.log(error);
+      setMessage("تعذر تسجيل الخروج. حاول مرة أخرى.");
+      return;
+    }
+
+    router.push("/");
   };
 
   useEffect(() => {
@@ -150,6 +164,15 @@ export default function AddressesPage() {
               );
             })}
           </div>
+        )}
+
+        {!loading && isLoggedIn && (
+          <button
+            onClick={signOut}
+            className="mt-4 w-full rounded-xl border border-black bg-white py-4 font-bold text-black shadow-sm"
+          >
+            تسجيل الخروج
+          </button>
         )}
       </div>
     </main>
