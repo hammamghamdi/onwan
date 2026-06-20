@@ -1,16 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const copy = {
   ar: {
-    brand: "عنوان",
     accountAuthed: "عناويني",
-    accountGuest: "دخول / عناويني",
+    accountGuest: "تسجيل الدخول",
     heroTitle: "كل تفاصيل الوصول في رابط واحد",
     heroText:
       "لا تشرح موقع منزلك كل مرة. أضف اللوكيشن، صور المدخل، وتعليمات الوصول في عنوان واحد وشاركه مع الجميع.",
@@ -36,9 +34,8 @@ const copy = {
       "اختر اسمًا مختصرًا، أضف بيانات الوصول، ثم شارك الرابط مع أي شخص يريد الوصول إليك.",
   },
   en: {
-    brand: "Onwan",
     accountAuthed: "My Addresses",
-    accountGuest: "Login / My Addresses",
+    accountGuest: "Log In",
     heroTitle: "Every arrival detail in one link",
     heroText:
       "Stop explaining your location again and again. Add the map link, entrance photos, and arrival instructions once, then share one address with everyone.",
@@ -109,12 +106,27 @@ export default function Home() {
       className="min-h-screen bg-[#f7f8f5] px-5 text-[#1f2d2b]"
     >
       <div className="mx-auto max-w-4xl">
-        <div className="pt-5">
-          <LanguageNav language={language} setLanguage={setLanguage} />
-        </div>
-
-        <nav className="flex items-center justify-between py-6">
-          <div className="text-2xl font-bold text-[#006b4f]">{text.brand}</div>
+        <nav
+          dir="ltr"
+          className="flex items-center justify-between py-6 text-sm"
+        >
+          <div className="flex items-center gap-2 font-bold text-gray-600">
+            <button
+              type="button"
+              onClick={() => setLanguage("ar")}
+              className={language === "ar" ? "text-[#006b4f]" : ""}
+            >
+              العربية
+            </button>
+            <span>|</span>
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              className={language === "en" ? "text-[#006b4f]" : ""}
+            >
+              English
+            </button>
+          </div>
 
           <Link
             href={isAuthenticated ? "/addresses" : "/login"}
