@@ -18,7 +18,8 @@ const copy = {
       "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
     beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
     exampleInput: "تفاصيل كثيرة",
-    exampleOutput: "رابط واحد",
+    exampleOutput: "رابط عنوان واحد",
+    liveExample: "جرّب المثال الحي",
     exampleLines: [
       "هذا اللوكيشن",
       "العمارة الثالثة",
@@ -47,9 +48,10 @@ const copy = {
     positioningTitle: "Your address is not a temporary link.",
     positioningText:
       "It is your own access name that you keep and share whenever needed.",
-    beforeTitle: "Instead of sending every detail every time",
+    beforeTitle: "Instead of sending all details every time",
     exampleInput: "Many details",
-    exampleOutput: "One link",
+    exampleOutput: "One address link",
+    liveExample: "Try the live example",
     exampleLines: [
       "This is the location",
       "Third building",
@@ -162,7 +164,10 @@ export default function Home() {
         </section>
 
         <section className="pb-8 pt-3">
-          <div className="rounded-3xl border bg-white p-4 shadow-sm sm:p-6">
+          <Link
+            href="/abdullah"
+            className="block rounded-3xl border bg-white p-4 text-inherit shadow-sm transition hover:border-[#006b4f] hover:shadow-md sm:p-6"
+          >
             <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
               {text.beforeTitle}
             </h2>
@@ -187,13 +192,16 @@ export default function Home() {
                 </p>
                 <div
                   dir="ltr"
-                  className="mx-auto w-fit rounded-full bg-[#006b4f] px-5 py-3 text-base font-bold text-white sm:text-lg"
+                  className="mx-auto mb-3 w-fit rounded-full bg-[#006b4f] px-5 py-3 text-base font-bold text-white sm:text-lg"
                 >
                   onwan.sa/abdullah
                 </div>
+                <span className="text-sm font-bold text-[#006b4f]">
+                  {text.liveExample}
+                </span>
               </div>
             </div>
-          </div>
+          </Link>
         </section>
 
         <section className="mx-auto max-w-2xl py-6 text-center">
