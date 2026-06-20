@@ -17,6 +17,8 @@ const copy = {
     positioningText:
       "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
     beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
+    exampleInput: "تفاصيل كثيرة",
+    exampleOutput: "رابط واحد",
     exampleLines: [
       "هذا اللوكيشن",
       "العمارة الثالثة",
@@ -46,6 +48,8 @@ const copy = {
     positioningText:
       "It is your own access name that you keep and share whenever needed.",
     beforeTitle: "Instead of sending every detail every time",
+    exampleInput: "Many details",
+    exampleOutput: "One link",
     exampleLines: [
       "This is the location",
       "Third building",
@@ -157,25 +161,37 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="pb-8 pt-4">
-          <h2 className="mb-6 text-center text-2xl font-bold">
-            {text.beforeTitle}
-          </h2>
+        <section className="pb-8 pt-3">
+          <div className="rounded-3xl border bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
+              {text.beforeTitle}
+            </h2>
 
-          <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <div className="rounded-2xl bg-gray-50 p-5 leading-9 text-gray-700">
-              {text.exampleLines.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </div>
+            <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+              <div className="rounded-2xl bg-gray-50 p-4 leading-8 text-gray-700">
+                <p className="mb-2 text-sm font-bold text-[#006b4f]">
+                  {text.exampleInput}
+                </p>
+                {text.exampleLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
 
-            <div className="my-7 text-center text-3xl">↓</div>
+              <div className="text-center text-3xl font-bold text-[#006b4f]">
+                ↓
+              </div>
 
-            <div
-              dir="ltr"
-              className="mx-auto w-fit rounded-full bg-[#006b4f] px-6 py-3 text-lg font-bold text-white"
-            >
-              onwan.sa/abdullah
+              <div className="rounded-2xl bg-[#eef5f1] p-4 text-center">
+                <p className="mb-3 text-sm font-bold text-[#006b4f]">
+                  {text.exampleOutput}
+                </p>
+                <div
+                  dir="ltr"
+                  className="mx-auto w-fit rounded-full bg-[#006b4f] px-5 py-3 text-base font-bold text-white sm:text-lg"
+                >
+                  onwan.sa/abdullah
+                </div>
+              </div>
             </div>
           </div>
         </section>
