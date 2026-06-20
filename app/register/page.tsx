@@ -3,7 +3,7 @@
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const reservedNames = [
@@ -50,7 +50,7 @@ const reservedNames = [
 
 const copy = {
   ar: {
-    missingName: "اكتب اسم العنوان أولًا.",
+    missingName: "اكتب اسم العنوان أولاً.",
     tooShort: "اسم العنوان يجب أن يكون 5 خانات على الأقل.",
     needsLetter:
       "اسم العنوان يجب أن يحتوي على حرف إنجليزي واحد على الأقل.",
@@ -60,11 +60,9 @@ const copy = {
     usernameLabel: "اسم العنوان",
     usernamePlaceholder: "مثال: abdullah",
     helper:
-      "اختر اسمًا سهلًا تقدر تشاركه مع الآخرين. الحروف الإنجليزية والأرقام فقط، والحد الأدنى 5 خانات.",
+      "اختر اسماً سهلاً تقدر تشاركه مع الآخرين. الحروف الإنجليزية والأرقام فقط، والحد الأدنى 5 خانات.",
     checking: "جاري التحقق...",
     check: "تحقق من التوفر",
-    available: "هذا العنوان متاح",
-    reserve: "احجز هذا العنوان",
     unavailable: "هذا العنوان محجوز",
   },
   en: {
@@ -80,13 +78,12 @@ const copy = {
       "Choose an easy name you can share with others. English letters and numbers only, minimum 5 characters.",
     checking: "Checking...",
     check: "Check availability",
-    available: "This address is available",
-    reserve: "Reserve this address",
     unavailable: "This address is reserved",
   },
 };
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { language, setLanguage } = useLanguage();
   const text = copy[language];
   const [username, setUsername] = useState("");
@@ -141,7 +138,12 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsAvailable(!data);
+    if (data) {
+      setIsAvailable(false);
+      return;
+    }
+
+    router.push(`/setup?name=${name}`);
   };
 
   return (
@@ -187,21 +189,6 @@ export default function RegisterPage() {
           <div className="mt-5 rounded-xl bg-red-100 p-4 text-center font-bold text-red-700">
             {errorMessage}
           </div>
-        )}
-
-        {isAvailable === true && (
-          <>
-            <div className="mt-6 rounded-xl bg-green-100 p-4 text-center font-bold text-green-700">
-              {text.available}
-            </div>
-
-            <Link
-              href={`/setup?name=${username.trim().toLowerCase()}`}
-              className="mt-4 block rounded-xl bg-black py-4 text-center font-bold text-white"
-            >
-              {text.reserve}
-            </Link>
-          </>
         )}
 
         {isAvailable === false && (
