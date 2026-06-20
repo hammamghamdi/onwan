@@ -13,20 +13,10 @@ const copy = {
     heroText:
       "لا تشرح موقع منزلك كل مرة. أضف اللوكيشن، صور المدخل، وتعليمات الوصول في عنوان واحد وشاركه مع الجميع.",
     mainCta: "احجز عنوانك مجاناً",
+    exampleCta: "مثال توضيحي",
     positioningTitle: "عنوانك ليس رابطاً مؤقتاً.",
     positioningText:
       "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
-    beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
-    exampleInput: "تفاصيل كثيرة",
-    exampleOutput: "رابط عنوان واحد",
-    liveExample: "جرّب المثال الحي",
-    exampleLines: [
-      "هذا اللوكيشن",
-      "العمارة الثالثة",
-      "الدور الثاني",
-      "الشقة يمين",
-      "الباب لونه بني",
-    ],
     needsTitle: "متى تحتاج عنوان؟",
     needs: [
       "عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.",
@@ -45,20 +35,10 @@ const copy = {
     heroText:
       "Stop explaining your location again and again. Add the map link, entrance photos, and arrival instructions once, then share one address with everyone.",
     mainCta: "Reserve your address for free",
+    exampleCta: "View example",
     positioningTitle: "Your address is not a temporary link.",
     positioningText:
       "It is your own access name that you keep and share whenever needed.",
-    beforeTitle: "Instead of sending all details every time",
-    exampleInput: "Many details",
-    exampleOutput: "One address link",
-    liveExample: "Try the live example",
-    exampleLines: [
-      "This is the location",
-      "Third building",
-      "Second floor",
-      "Apartment on the right",
-      "The door is brown",
-    ],
     needsTitle: "When do you need Onwan?",
     needs: [
       "When a delivery driver keeps calling because they cannot find the place.",
@@ -146,7 +126,7 @@ export default function Home() {
           </Link>
         </nav>
 
-        <section className="pb-5 pt-10 text-center sm:pt-12">
+        <section className="pb-6 pt-10 text-center sm:pt-12">
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
             {text.heroTitle}
           </h1>
@@ -155,56 +135,24 @@ export default function Home() {
             {text.heroText}
           </p>
 
-          <Link
-            href="/register"
-            className="inline-block rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
-          >
-            {text.mainCta}
-          </Link>
+          <div className="mx-auto flex max-w-sm flex-col gap-3">
+            <Link
+              href="/register"
+              className="rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
+            >
+              {text.mainCta}
+            </Link>
+
+            <Link
+              href="/abdullah"
+              className="rounded-full border border-[#006b4f] bg-[#eef5f1] px-8 py-4 font-bold text-[#006b4f]"
+            >
+              {text.exampleCta}
+            </Link>
+          </div>
         </section>
 
-        <section className="pb-8 pt-3">
-          <Link
-            href="/abdullah"
-            className="block rounded-3xl border bg-white p-4 text-inherit shadow-sm transition hover:border-[#006b4f] hover:shadow-md sm:p-6"
-          >
-            <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
-              {text.beforeTitle}
-            </h2>
-
-            <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-              <div className="rounded-2xl bg-gray-50 p-4 leading-8 text-gray-700">
-                <p className="mb-2 text-sm font-bold text-[#006b4f]">
-                  {text.exampleInput}
-                </p>
-                {text.exampleLines.map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
-              </div>
-
-              <div className="text-center text-3xl font-bold text-[#006b4f]">
-                ↓
-              </div>
-
-              <div className="rounded-2xl bg-[#eef5f1] p-4 text-center">
-                <p className="mb-3 text-sm font-bold text-[#006b4f]">
-                  {text.exampleOutput}
-                </p>
-                <div
-                  dir="ltr"
-                  className="mx-auto mb-3 w-fit rounded-full bg-[#006b4f] px-5 py-3 text-base font-bold text-white sm:text-lg"
-                >
-                  onwan.sa/abdullah
-                </div>
-                <span className="text-sm font-bold text-[#006b4f]">
-                  {text.liveExample}
-                </span>
-              </div>
-            </div>
-          </Link>
-        </section>
-
-        <section className="mx-auto max-w-2xl py-6 text-center">
+        <section className="mx-auto max-w-2xl pb-8 pt-2 text-center">
           <h2 className="mb-2 text-2xl font-bold">{text.positioningTitle}</h2>
           <p className="text-lg leading-8 text-gray-700">
             {text.positioningText}
