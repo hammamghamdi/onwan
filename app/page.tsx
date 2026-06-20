@@ -14,6 +14,9 @@ const copy = {
       "لا تشرح موقع منزلك كل مرة. أضف اللوكيشن، صور المدخل، وتعليمات الوصول في عنوان واحد وشاركه مع الجميع.",
     mainCta: "احجز عنوانك مجانًا",
     exampleCta: "مثال توضيحي",
+    positioningTitle: "عنوانك ليس رابطًا مؤقتًا.",
+    positioningText:
+      "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
     beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
     exampleLines: [
       "هذا اللوكيشن",
@@ -41,6 +44,9 @@ const copy = {
       "Stop explaining your location again and again. Add the map link, entrance photos, and arrival instructions once, then share one address with everyone.",
     mainCta: "Reserve your address for free",
     exampleCta: "View example",
+    positioningTitle: "Your address is not a temporary link.",
+    positioningText:
+      "It is your own access name that you keep and share whenever needed.",
     beforeTitle: "Instead of sending every detail every time",
     exampleLines: [
       "This is the location",
@@ -136,7 +142,7 @@ export default function Home() {
           </Link>
         </nav>
 
-        <section className="py-12 text-center">
+        <section className="pb-7 pt-10 text-center sm:pt-12">
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
             {text.heroTitle}
           </h1>
@@ -162,7 +168,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="mx-auto max-w-2xl py-5 text-center">
+          <h2 className="mb-2 text-2xl font-bold">{text.positioningTitle}</h2>
+          <p className="text-lg leading-8 text-gray-700">
+            {text.positioningText}
+          </p>
+        </section>
+
+        <section className="pb-10 pt-7">
           <h2 className="mb-6 text-center text-2xl font-bold">
             {text.beforeTitle}
           </h2>
