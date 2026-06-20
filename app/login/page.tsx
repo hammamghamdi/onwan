@@ -206,7 +206,7 @@ export default function LoginPage() {
       options: {
         emailRedirectTo:
           typeof window !== "undefined"
-            ? `${window.location.origin}/login`
+            ? `${window.location.origin}/addresses`
             : undefined,
       },
     });
