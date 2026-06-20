@@ -12,9 +12,8 @@ const copy = {
     heroTitle: "كل تفاصيل الوصول في رابط واحد",
     heroText:
       "لا تشرح موقع منزلك كل مرة. أضف اللوكيشن، صور المدخل، وتعليمات الوصول في عنوان واحد وشاركه مع الجميع.",
-    mainCta: "احجز عنوانك مجانًا",
-    exampleCta: "مثال توضيحي",
-    positioningTitle: "عنوانك ليس رابطًا مؤقتًا.",
+    mainCta: "احجز عنوانك مجاناً",
+    positioningTitle: "عنوانك ليس رابطاً مؤقتاً.",
     positioningText:
       "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
     beforeTitle: "بدل إرسال كل التفاصيل كل مرة",
@@ -32,9 +31,9 @@ const copy = {
       "عندما يتأخر الفني لأن وصف الوصول غير واضح.",
       "عندما تضطر لإعادة شرح الموقع لكل شخص جديد.",
     ],
-    finalTitle: "أنشئ عنوانك وشاركه فورًا",
+    finalTitle: "أنشئ عنوانك وشاركه فوراً",
     finalText:
-      "اختر اسمًا مختصرًا، أضف بيانات الوصول، ثم شارك الرابط مع أي شخص يريد الوصول إليك.",
+      "اختر اسماً مختصراً، أضف بيانات الوصول، ثم شارك الرابط مع أي شخص يريد الوصول إليك.",
   },
   en: {
     accountAuthed: "My Addresses",
@@ -43,7 +42,6 @@ const copy = {
     heroText:
       "Stop explaining your location again and again. Add the map link, entrance photos, and arrival instructions once, then share one address with everyone.",
     mainCta: "Reserve your address for free",
-    exampleCta: "View example",
     positioningTitle: "Your address is not a temporary link.",
     positioningText:
       "It is your own access name that you keep and share whenever needed.",
@@ -142,7 +140,7 @@ export default function Home() {
           </Link>
         </nav>
 
-        <section className="pb-7 pt-10 text-center sm:pt-12">
+        <section className="pb-5 pt-10 text-center sm:pt-12">
           <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
             {text.heroTitle}
           </h1>
@@ -151,31 +149,15 @@ export default function Home() {
             {text.heroText}
           </p>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
-              href="/register"
-              className="rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
-            >
-              {text.mainCta}
-            </Link>
-
-            <Link
-              href="/abdullah"
-              className="rounded-full border border-[#006b4f] bg-[#eef5f1] px-8 py-4 font-bold text-[#006b4f]"
-            >
-              {text.exampleCta}
-            </Link>
-          </div>
+          <Link
+            href="/register"
+            className="inline-block rounded-full bg-[#006b4f] px-8 py-4 font-bold text-white"
+          >
+            {text.mainCta}
+          </Link>
         </section>
 
-        <section className="mx-auto max-w-2xl py-5 text-center">
-          <h2 className="mb-2 text-2xl font-bold">{text.positioningTitle}</h2>
-          <p className="text-lg leading-8 text-gray-700">
-            {text.positioningText}
-          </p>
-        </section>
-
-        <section className="pb-10 pt-7">
+        <section className="pb-8 pt-4">
           <h2 className="mb-6 text-center text-2xl font-bold">
             {text.beforeTitle}
           </h2>
@@ -196,6 +178,13 @@ export default function Home() {
               onwan.sa/abdullah
             </div>
           </div>
+        </section>
+
+        <section className="mx-auto max-w-2xl py-6 text-center">
+          <h2 className="mb-2 text-2xl font-bold">{text.positioningTitle}</h2>
+          <p className="text-lg leading-8 text-gray-700">
+            {text.positioningText}
+          </p>
         </section>
 
         <section className="rounded-3xl bg-[#eef5f1] p-7 text-center">
