@@ -62,7 +62,7 @@ const copy = {
     helper:
       "اختر اسماً سهلاً تقدر تشاركه مع الآخرين. الحروف الإنجليزية والأرقام فقط، والحد الأدنى 5 خانات.",
     checking: "جاري التحقق...",
-    check: "تحقق من التوفر",
+    check: "احجز عنوانك الآن",
     unavailable: "هذا العنوان محجوز",
   },
   en: {
@@ -77,8 +77,8 @@ const copy = {
     helper:
       "Choose an easy name you can share with others. English letters and numbers only, minimum 5 characters.",
     checking: "Checking...",
-    check: "Check availability",
-    unavailable: "This address is reserved",
+    check: "Reserve your address now",
+    unavailable: "This address is already taken",
   },
 };
 
