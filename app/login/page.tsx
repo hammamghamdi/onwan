@@ -96,11 +96,41 @@ export default function LoginPage() {
       router.replace("/addresses");
     };
 
-    const checkCurrentUser = async () => {
+    const handleSession = async (
+      session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
+    ) => {
+      if (!session?.user) return false;
+
+      await redirectAuthenticatedUser(session.user.id, session.user.email);
+      return true;
+    };
+
+    const checkCurrentSession = async () => {
+      const callbackCode =
+        typeof window !== "undefined"
+          ? new URL(window.location.href).searchParams.get("code")
+          : null;
+
+      if (callbackCode) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(
+          callbackCode
+        );
+
+        if (!isMounted) return;
+
+        if (data.session && (await handleSession(data.session))) {
+          return;
+        }
+
+        if (error) {
+          console.log(error);
+        }
+      }
+
       const {
-        data: { user },
+        data: { session },
         error,
-      } = await supabase.auth.getUser();
+      } = await supabase.auth.getSession();
 
       if (!isMounted) return;
 
@@ -110,24 +140,26 @@ export default function LoginPage() {
         return;
       }
 
-      if (user) {
-        await redirectAuthenticatedUser(user.id, user.email);
+      if (await handleSession(session)) {
         return;
       }
 
       setAuthChecking(false);
     };
 
-    checkCurrentUser();
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
+      if (
+        (event === "INITIAL_SESSION" || event === "SIGNED_IN") &&
+        session?.user
+      ) {
         setAuthChecking(true);
         redirectAuthenticatedUser(session.user.id, session.user.email);
       }
     });
+
+    checkCurrentSession();
 
     return () => {
       isMounted = false;
