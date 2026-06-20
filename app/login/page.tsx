@@ -33,7 +33,7 @@ const copy = {
       "You are signed in, but we could not link your addresses to this email.",
     authErrorPrefix: "Could not send the login link. Supabase message:",
     rateLimit:
-      "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
+      "Too many login links were requested in a short time. Please wait 30 to 60 minutes and try again.",
     sent: "Login link sent. Check your email.",
     title: "Log In",
     intro:
@@ -45,6 +45,8 @@ const copy = {
   },
 };
 
+type MessageKey = "rateLimit";
+
 export default function LoginPage() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
@@ -53,10 +55,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageKey, setMessageKey] = useState<MessageKey | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const displayedMessage = messageKey ? text[messageKey] : message;
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const clearMessage = () => {
+    setMessage("");
+    setMessageKey(null);
   };
 
   const connectOwnedAddresses = useCallback(
@@ -80,6 +89,7 @@ export default function LoginPage() {
       if (error) {
         console.log(error);
         setIsSuccess(false);
+        setMessageKey(null);
         setMessage(text.claimError);
       }
     },
@@ -101,7 +111,9 @@ export default function LoginPage() {
     };
 
     const handleSession = async (
-      session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
+      session: Awaited<
+        ReturnType<typeof supabase.auth.getSession>
+      >["data"]["session"]
     ) => {
       if (!session?.user) return false;
 
@@ -174,7 +186,7 @@ export default function LoginPage() {
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
 
-    setMessage("");
+    clearMessage();
     setIsSuccess(false);
 
     if (!cleanEmail) {
@@ -204,7 +216,7 @@ export default function LoginPage() {
     if (error) {
       console.log(error);
       if (error.message.toLowerCase().includes("email rate limit exceeded")) {
-        setMessage(text.rateLimit);
+        setMessageKey("rateLimit");
         return;
       }
 
@@ -245,14 +257,14 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
-              setMessage("");
+              clearMessage();
               setIsSuccess(false);
             }}
             className="mb-4 w-full rounded-xl border p-4 text-black"
             placeholder="example@email.com"
           />
 
-          {message && (
+          {displayedMessage && (
             <p
               className={`mb-4 rounded-xl p-3 text-center font-bold ${
                 isSuccess
@@ -260,7 +272,7 @@ export default function LoginPage() {
                   : "bg-red-100 text-red-700"
               }`}
             >
-              {message}
+              {displayedMessage}
             </p>
           )}
 
