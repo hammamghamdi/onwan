@@ -14,6 +14,8 @@ const copy = {
     claimError:
       "تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.",
     authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
+    rateLimit:
+      "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
     sent: "تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.",
     title: "تسجيل الدخول",
     intro:
@@ -30,6 +32,8 @@ const copy = {
     claimError:
       "You are signed in, but we could not link your addresses to this email.",
     authErrorPrefix: "Could not send the login link. Supabase message:",
+    rateLimit:
+      "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
     sent: "Login link sent. Check your email.",
     title: "Log In",
     intro:
@@ -199,6 +203,11 @@ export default function LoginPage() {
 
     if (error) {
       console.log(error);
+      if (error.message.toLowerCase().includes("email rate limit exceeded")) {
+        setMessage(text.rateLimit);
+        return;
+      }
+
       setMessage(`${text.authErrorPrefix} ${error.message}`);
       return;
     }
