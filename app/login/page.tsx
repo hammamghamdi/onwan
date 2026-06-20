@@ -3,7 +3,7 @@
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const copy = {
@@ -13,8 +13,6 @@ const copy = {
     noUserEmail: "المستخدم المسجل لا يحتوي على بريد إلكتروني.",
     claimError:
       "تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.",
-    claimed:
-      "تم تسجيل الدخول وربط عناوينك بهذا البريد الإلكتروني.",
     authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
     sent: "تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.",
     title: "تسجيل الدخول",
@@ -23,7 +21,7 @@ const copy = {
     emailLabel: "البريد الإلكتروني",
     loading: "جاري الإرسال...",
     send: "إرسال رابط الدخول",
-    addresses: "عرض عناويني",
+    checkingSession: "جاري التحقق من تسجيل الدخول...",
   },
   en: {
     noEmail: "Enter your email address.",
@@ -31,7 +29,6 @@ const copy = {
     noUserEmail: "Authenticated user has no email.",
     claimError:
       "You are signed in, but we could not link your addresses to this email.",
-    claimed: "You are signed in and your addresses are linked to this email.",
     authErrorPrefix: "Could not send the login link. Supabase message:",
     sent: "Login link sent. Check your email.",
     title: "Log In",
@@ -40,18 +37,19 @@ const copy = {
     emailLabel: "Email",
     loading: "Sending...",
     send: "Send Login Link",
-    addresses: "View My Addresses",
+    checkingSession: "Checking your login...",
   },
 };
 
 export default function LoginPage() {
+  const router = useRouter();
   const { language, setLanguage } = useLanguage();
   const text = copy[language];
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -64,7 +62,7 @@ export default function LoginPage() {
         return;
       }
 
-      const { count, error } = await supabase
+      const { error } = await supabase
         .from("profiles")
         .update(
           { user_id: userId },
@@ -79,50 +77,63 @@ export default function LoginPage() {
         console.log(error);
         setIsSuccess(false);
         setMessage(text.claimError);
-        return;
-      }
-
-      if (count && count > 0) {
-        setIsSuccess(true);
-        setMessage(text.claimed);
       }
     },
-    [text.claimError, text.claimed, text.noUserEmail]
+    [text.claimError, text.noUserEmail]
   );
 
   useEffect(() => {
-    const connectCurrentUser = async () => {
+    let isMounted = true;
+
+    const redirectAuthenticatedUser = async (
+      userId: string,
+      userEmail?: string
+    ) => {
+      await connectOwnedAddresses(userId, userEmail);
+
+      if (!isMounted) return;
+
+      router.replace("/addresses");
+    };
+
+    const checkCurrentUser = async () => {
       const {
         data: { user },
         error,
       } = await supabase.auth.getUser();
 
+      if (!isMounted) return;
+
       if (error) {
         console.log(error);
+        setAuthChecking(false);
         return;
       }
 
       if (user) {
-        setIsSignedIn(true);
-        await connectOwnedAddresses(user.id, user.email);
+        await redirectAuthenticatedUser(user.id, user.email);
+        return;
       }
+
+      setAuthChecking(false);
     };
 
-    connectCurrentUser();
+    checkCurrentUser();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        setIsSignedIn(true);
-        connectOwnedAddresses(session.user.id, session.user.email);
+        setAuthChecking(true);
+        redirectAuthenticatedUser(session.user.id, session.user.email);
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [connectOwnedAddresses]);
+  }, [connectOwnedAddresses, router]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -171,59 +182,56 @@ export default function LoginPage() {
     >
       <LanguageNav language={language} setLanguage={setLanguage} />
 
-      <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 shadow-sm">
-        <h1 className="mb-3 text-center text-3xl font-bold text-black">
-          {text.title}
-        </h1>
+      {authChecking ? (
+        <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 text-center font-bold text-black shadow-sm">
+          {text.checkingSession}
+        </div>
+      ) : (
+        <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 shadow-sm">
+          <h1 className="mb-3 text-center text-3xl font-bold text-black">
+            {text.title}
+          </h1>
 
-        <p className="mb-6 text-center leading-7 text-gray-700">
-          {text.intro}
-        </p>
-
-        <label className="mb-2 block font-bold text-black">
-          {text.emailLabel}
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            setMessage("");
-            setIsSuccess(false);
-          }}
-          className="mb-4 w-full rounded-xl border p-4 text-black"
-          placeholder="example@email.com"
-        />
-
-        {message && (
-          <p
-            className={`mb-4 rounded-xl p-3 text-center font-bold ${
-              isSuccess
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message}
+          <p className="mb-6 text-center leading-7 text-gray-700">
+            {text.intro}
           </p>
-        )}
 
-        <button
-          onClick={sendMagicLink}
-          disabled={loading}
-          className="mb-4 w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
-        >
-          {loading ? text.loading : text.send}
-        </button>
+          <label className="mb-2 block font-bold text-black">
+            {text.emailLabel}
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setMessage("");
+              setIsSuccess(false);
+            }}
+            className="mb-4 w-full rounded-xl border p-4 text-black"
+            placeholder="example@email.com"
+          />
 
-        {isSignedIn && (
-          <Link
-            href="/addresses"
-            className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
+          {message && (
+            <p
+              className={`mb-4 rounded-xl p-3 text-center font-bold ${
+                isSuccess
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+
+          <button
+            onClick={sendMagicLink}
+            disabled={loading}
+            className="w-full rounded-xl bg-[#006b4f] py-4 font-bold text-white disabled:opacity-60"
           >
-            {text.addresses}
-          </Link>
-        )}
-      </div>
+            {loading ? text.loading : text.send}
+          </button>
+        </div>
+      )}
     </main>
   );
 }
