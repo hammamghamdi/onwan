@@ -15,8 +15,10 @@ const copy = {
     mainCta: "احجز عنوانك مجاناً",
     exampleCta: "مثال توضيحي",
     positioningTitle: "عنوانك ليس رابطاً مؤقتاً.",
-    positioningText:
-      "إنه اسم وصول دائم خاص بك، تحتفظ به مثل رقم جوالك، وتحدّث بياناته متى احتجت دون تغيير الرابط الذي تشاركه.",
+    positioningText: [
+      "إنه أصل رقمي خاص بك، يحمل اسم وصول فريداً لا يتكرر ولا يشاركك فيه أحد.",
+      "احجزه مرة واحدة، ثم حدّث الموقع والصور وتعليمات الوصول متى احتجت، بينما يبقى الرابط نفسه الذي يعرفك به الآخرون.",
+    ],
     needsTitle: "متى تحتاج عنوان؟",
     needs: [
       "عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.",
@@ -37,8 +39,10 @@ const copy = {
     mainCta: "Reserve your address for free",
     exampleCta: "View example",
     positioningTitle: "Your address is not a temporary link.",
-    positioningText:
-      "It is your own permanent access name. You keep it like a phone number, update its details whenever needed, and share the same link every time.",
+    positioningText: [
+      "It is your own digital asset, with a unique access name that cannot be duplicated or shared with anyone else.",
+      "Reserve it once, then update your location, photos, and access instructions whenever needed, while keeping the same link that people know you by.",
+    ],
     needsTitle: "When do you need Onwan?",
     needs: [
       "When a delivery driver keeps calling because they cannot find the place.",
@@ -154,9 +158,11 @@ export default function Home() {
 
         <section className="mx-auto max-w-2xl pb-16 pt-2 text-center sm:pb-20">
           <h2 className="mb-3 text-2xl font-bold">{text.positioningTitle}</h2>
-          <p className="text-lg leading-8 text-gray-700">
-            {text.positioningText}
-          </p>
+          <div className="space-y-4 text-lg leading-8 text-gray-700">
+            {text.positioningText.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         </section>
 
         <section className="mt-4 rounded-3xl bg-[#eef5f1] p-7 text-center sm:mt-8">
