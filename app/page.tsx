@@ -16,7 +16,7 @@ const copy = {
     exampleCta: "مثال توضيحي",
     positioningTitle: "عنوانك ليس رابطاً مؤقتاً.",
     positioningText:
-      "إنه اسم وصول خاص بك، تحتفظ به وتشاركه كلما احتجت.",
+      "إنه اسم وصول دائم خاص بك، تحتفظ به مثل رقم جوالك، وتحدّث بياناته متى احتجت دون تغيير الرابط الذي تشاركه.",
     needsTitle: "متى تحتاج عنوان؟",
     needs: [
       "عندما يتصل المندوب أكثر من مرة لأنه لم يجد الموقع.",
@@ -38,7 +38,7 @@ const copy = {
     exampleCta: "View example",
     positioningTitle: "Your address is not a temporary link.",
     positioningText:
-      "It is your own access name that you keep and share whenever needed.",
+      "It is your own permanent access name. You keep it like a phone number, update its details whenever needed, and share the same link every time.",
     needsTitle: "When do you need Onwan?",
     needs: [
       "When a delivery driver keeps calling because they cannot find the place.",
@@ -152,14 +152,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-2xl pb-8 pt-2 text-center">
-          <h2 className="mb-2 text-2xl font-bold">{text.positioningTitle}</h2>
+        <section className="mx-auto max-w-2xl pb-16 pt-2 text-center sm:pb-20">
+          <h2 className="mb-3 text-2xl font-bold">{text.positioningTitle}</h2>
           <p className="text-lg leading-8 text-gray-700">
             {text.positioningText}
           </p>
         </section>
 
-        <section className="rounded-3xl bg-[#eef5f1] p-7 text-center">
+        <section className="mt-4 rounded-3xl bg-[#eef5f1] p-7 text-center sm:mt-8">
           <h2 className="mb-4 text-2xl font-bold">{text.needsTitle}</h2>
 
           <div
