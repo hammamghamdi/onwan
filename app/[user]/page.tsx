@@ -40,6 +40,9 @@ const copy = {
     next: "التالي",
     instructions: "تعليمات الوصول",
     noInstructions: "لم يتم إدخال تعليمات الوصول",
+    listenInstructions: "استمع للتعليمات",
+    stopInstructions: "إيقاف الاستماع",
+    speechUnavailable: "الاستماع غير مدعوم في هذا المتصفح.",
     createAddress: "أنشئ عنوانك الآن",
   },
   en: {
@@ -54,6 +57,9 @@ const copy = {
     next: "Next",
     instructions: "Access Instructions",
     noInstructions: "No access instructions entered",
+    listenInstructions: "Listen to instructions",
+    stopInstructions: "Stop listening",
+    speechUnavailable: "Listening is not supported in this browser.",
     createAddress: "Create your address now",
   },
   ur: {
@@ -68,6 +74,9 @@ const copy = {
     next: "اگلا",
     instructions: "رسائی کی ہدایات",
     noInstructions: "رسائی کی ہدایات درج نہیں کی گئیں",
+    listenInstructions: "ہدایات سنیں",
+    stopInstructions: "سننا بند کریں",
+    speechUnavailable: "اس براؤزر میں سننے کی سہولت دستیاب نہیں ہے۔",
     createAddress: "اپنا عنوان ابھی بنائیں",
   },
   bn: {
@@ -82,11 +91,21 @@ const copy = {
     next: "পরের",
     instructions: "পৌঁছানোর নির্দেশনা",
     noInstructions: "পৌঁছানোর নির্দেশনা দেওয়া হয়নি",
+    listenInstructions: "নির্দেশনা শুনুন",
+    stopInstructions: "শোনা বন্ধ করুন",
+    speechUnavailable: "এই ব্রাউজারে শোনার সুবিধা নেই।",
     createAddress: "এখন আপনার ঠিকানা তৈরি করুন",
   },
 } satisfies Record<PublicLanguage, Record<string, string>>;
 
 const isLtr = (language: PublicLanguage) => language === "en" || language === "bn";
+
+const speechLanguage: Record<PublicLanguage, string> = {
+  ar: "ar-SA",
+  en: "en-US",
+  ur: "ur-PK",
+  bn: "bn-BD",
+};
 
 export default function UserAddressPage() {
   const params = useParams();
@@ -96,6 +115,8 @@ export default function UserAddressPage() {
   const [loaded, setLoaded] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [language, setLanguage] = useState<PublicLanguage>("ar");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechError, setSpeechError] = useState("");
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -135,6 +156,12 @@ export default function UserAddressPage() {
 
     loadAddress();
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   const text = copy[language];
   const pageDirection = isLtr(language) ? "ltr" : "rtl";
@@ -230,6 +257,30 @@ export default function UserAddressPage() {
     setCurrentPhoto((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
+  const toggleInstructionsSpeech = () => {
+    setSpeechError("");
+
+    if (!("speechSynthesis" in window)) {
+      setSpeechError(text.speechUnavailable);
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(selectedInstructions);
+    utterance.lang = speechLanguage[selectedInstructionLanguage];
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
   return (
     <main
       dir={pageDirection}
@@ -300,9 +351,19 @@ export default function UserAddressPage() {
         )}
 
         <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-bold text-black">
-            {text.instructions}
-          </h2>
+          <div className="mb-3 flex flex-col gap-3">
+            <h2 className="text-lg font-bold text-black">
+              {text.instructions}
+            </h2>
+
+            <button
+              type="button"
+              onClick={toggleInstructionsSpeech}
+              className="w-full rounded-2xl border border-[#006b4f] px-4 py-3 text-sm font-bold text-[#006b4f]"
+            >
+              {isSpeaking ? text.stopInstructions : text.listenInstructions}
+            </button>
+          </div>
 
           <p
             dir={instructionsDirection}
@@ -310,6 +371,10 @@ export default function UserAddressPage() {
           >
             {selectedInstructions}
           </p>
+
+          {speechError && (
+            <p className="mt-3 text-sm font-bold text-red-700">{speechError}</p>
+          )}
         </section>
 
         <Link
