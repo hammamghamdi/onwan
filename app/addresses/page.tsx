@@ -16,12 +16,13 @@ type AddressProfile = {
 const copy = {
   ar: {
     authCheckError: "تعذر التحقق من تسجيل الدخول.",
+    claimError: "تم تسجيل الدخول، لكن تعذر ربط العناوين بهذا البريد.",
     loadError: "تعذر تحميل عناوينك.",
     logoutError: "تعذر تسجيل الخروج. حاول مرة أخرى.",
     title: "عناويني",
     intro: "العناوين المرتبطة ببريدك الإلكتروني.",
     loading: "جاري تحميل العناوين...",
-    loginPrompt: "سجل دخولك أولًا لعرض عناوينك.",
+    loginPrompt: "سجل دخولك أولاً لعرض عناوينك.",
     login: "تسجيل الدخول",
     empty: "لا توجد عناوين مرتبطة بهذا الحساب حتى الآن.",
     noCity: "لم يتم إدخال المدينة",
@@ -31,6 +32,7 @@ const copy = {
   },
   en: {
     authCheckError: "Could not verify your login.",
+    claimError: "You are signed in, but we could not link addresses to this email.",
     loadError: "Could not load your addresses.",
     logoutError: "Could not log out. Try again.",
     title: "My Addresses",
@@ -97,6 +99,25 @@ export default function AddressesPage() {
         return;
       }
 
+      setIsLoggedIn(true);
+
+      if (user.email) {
+        const { error: claimError } = await supabase
+          .from("profiles")
+          .update({ user_id: user.id })
+          .eq("email", user.email.trim().toLowerCase())
+          .is("user_id", null);
+
+        if (!isMounted) return;
+
+        if (claimError) {
+          console.log(claimError);
+          setMessage(text.claimError);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("username, city, owner_token")
@@ -112,7 +133,6 @@ export default function AddressesPage() {
         return;
       }
 
-      setIsLoggedIn(true);
       setMessage("");
       setAddresses(data || []);
       setLoading(false);
@@ -123,7 +143,7 @@ export default function AddressesPage() {
     return () => {
       isMounted = false;
     };
-  }, [text.authCheckError, text.loadError]);
+  }, [text.authCheckError, text.claimError, text.loadError]);
 
   return (
     <main
