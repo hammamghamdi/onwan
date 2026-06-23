@@ -4,7 +4,7 @@ import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { type KeyboardEvent, useEffect, useState } from "react";
 
 type AddressData = {
   username: string;
@@ -88,6 +88,7 @@ export default function UserAddressPage() {
   const [loaded, setLoaded] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [language, setLanguage] = useState<PublicLanguage>("ar");
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -228,11 +229,39 @@ export default function UserAddressPage() {
   ) as string[];
 
   const nextPhoto = () => {
+    if (photos.length < 2) return;
     setCurrentPhoto((prev) => (prev + 1) % photos.length);
   };
 
   const prevPhoto = () => {
+    if (photos.length < 2) return;
     setCurrentPhoto((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const handlePhotoTouchEnd = (clientX: number) => {
+    if (touchStartX === null || photos.length < 2) return;
+
+    const distance = touchStartX - clientX;
+
+    if (Math.abs(distance) > 40) {
+      if (distance > 0) {
+        nextPhoto();
+      } else {
+        prevPhoto();
+      }
+    }
+
+    setTouchStartX(null);
+  };
+
+  const handlePhotoKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft") {
+      nextPhoto();
+    }
+
+    if (event.key === "ArrowRight") {
+      prevPhoto();
+    }
   };
 
   return (
@@ -276,30 +305,46 @@ export default function UserAddressPage() {
               </span>
             </div>
 
-            <div className="overflow-hidden rounded-2xl bg-gray-100">
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={text.photos}
+              onKeyDown={handlePhotoKeyDown}
+              onTouchStart={(event) =>
+                setTouchStartX(event.touches[0]?.clientX ?? null)
+              }
+              onTouchEnd={(event) =>
+                handlePhotoTouchEnd(event.changedTouches[0]?.clientX ?? 0)
+              }
+              onTouchCancel={() => setTouchStartX(null)}
+              className="overflow-hidden rounded-2xl bg-gray-100"
+            >
               <img
                 src={photos[currentPhoto]}
                 alt={`${text.photoAlt} ${currentPhoto + 1}`}
-                className="h-64 w-full object-contain"
+                draggable={false}
+                className="h-64 w-full select-none object-contain"
               />
             </div>
 
             {photos.length > 1 && (
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={prevPhoto}
-                  className="flex-1 rounded-xl border border-black py-3 text-sm font-bold text-black"
+                  aria-label={text.previous}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-lg font-bold text-black"
                 >
-                  {text.previous}
+                  ‹
                 </button>
 
                 <button
                   type="button"
                   onClick={nextPhoto}
-                  className="flex-1 rounded-xl border border-black py-3 text-sm font-bold text-black"
+                  aria-label={text.next}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-lg font-bold text-black"
                 >
-                  {text.next}
+                  ›
                 </button>
               </div>
             )}
