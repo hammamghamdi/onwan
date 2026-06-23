@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { PhotoCropModal } from "@/app/components/PhotoCropModal";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
@@ -50,6 +51,10 @@ const copy = {
     imageCompressError: "فشل ضغط الصورة.",
     imageConvertError: "فشل تحويل الصورة.",
     invalidImage: "الملف المختار ليس صورة صالحة.",
+    cropTitle: "قص الصورة بالعرض",
+    cropZoom: "تكبير الصورة",
+    useCroppedPhoto: "استخدام الصورة",
+    cancelCrop: "إلغاء",
     uploadError: "تعذر رفع الصورة",
     unknownUploadError: "تعذر رفع الصورة: خطأ غير معروف.",
     instructionsLabel: "تعليمات الوصول",
@@ -92,6 +97,10 @@ const copy = {
     imageCompressError: "Failed to compress the image.",
     imageConvertError: "Failed to convert the image.",
     invalidImage: "The selected file is not a valid image.",
+    cropTitle: "Crop photo to landscape",
+    cropZoom: "Zoom photo",
+    useCroppedPhoto: "Use photo",
+    cancelCrop: "Cancel",
     uploadError: "Could not upload image",
     unknownUploadError: "Could not upload image: unknown error.",
     instructionsLabel: "Arrival instructions",
@@ -124,6 +133,10 @@ function ManageContent() {
     null,
   ]);
   const [photoPreviews, setPhotoPreviews] = useState(["", "", ""]);
+  const [cropRequest, setCropRequest] = useState<{
+    file: File;
+    index: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -202,15 +215,27 @@ function ManageContent() {
     });
   };
 
-  const handlePhotoChange = (
-    index: number,
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
-    const selectedPhoto = event.target.files?.[0];
+  const isPortraitPhoto = (file: File): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(file);
 
-    if (!selectedPhoto) return;
+      image.onload = () => {
+        resolve(image.naturalHeight > image.naturalWidth);
+        URL.revokeObjectURL(objectUrl);
+      };
 
-    const previewUrl = URL.createObjectURL(selectedPhoto);
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error(text.invalidImage));
+      };
+
+      image.src = objectUrl;
+    });
+  };
+
+  const setPhotoSlot = (index: number, photo: File) => {
+    const previewUrl = URL.createObjectURL(photo);
 
     setPhotoPreviews((current) => {
       if (current[index]?.startsWith("blob:")) {
@@ -229,12 +254,40 @@ function ManageContent() {
 
     setPhotoFiles((current) => {
       const next = [...current];
-      next[index] = selectedPhoto;
+      next[index] = photo;
       return next;
     });
 
     setMessage("");
+  };
+
+  const handlePhotoChange = async (
+    index: number,
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedPhoto = event.target.files?.[0];
     event.target.value = "";
+
+    if (!selectedPhoto) return;
+
+    try {
+      if (await isPortraitPhoto(selectedPhoto)) {
+        setCropRequest({ file: selectedPhoto, index });
+        return;
+      }
+
+      setPhotoSlot(index, selectedPhoto);
+    } catch (error) {
+      console.log(error);
+      setMessage(error instanceof Error ? error.message : text.invalidImage);
+    }
+  };
+
+  const useCroppedPhoto = (photo: File) => {
+    if (!cropRequest) return;
+
+    setPhotoSlot(cropRequest.index, photo);
+    setCropRequest(null);
   };
 
   const uploadPhoto = async (photo: File, index: number) => {
@@ -558,6 +611,19 @@ function ManageContent() {
           </>
         )}
       </div>
+
+      {cropRequest && (
+        <PhotoCropModal
+          key={`${cropRequest.index}-${cropRequest.file.name}-${cropRequest.file.lastModified}`}
+          file={cropRequest.file}
+          title={text.cropTitle}
+          zoomLabel={text.cropZoom}
+          confirmLabel={text.useCroppedPhoto}
+          cancelLabel={text.cancelCrop}
+          onConfirm={useCroppedPhoto}
+          onCancel={() => setCropRequest(null)}
+        />
+      )}
     </main>
   );
 }

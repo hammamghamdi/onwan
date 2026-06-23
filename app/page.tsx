@@ -162,6 +162,12 @@ export default function Home() {
               <p key={line}>{line}</p>
             ))}
           </div>
+          <p
+            dir="ltr"
+            className="my-8 text-center text-2xl font-bold text-[#006b4f] sm:text-3xl"
+          >
+            Onwan.sa/Abdullah
+          </p>
         </section>
 
         <section className="mt-4 rounded-3xl bg-[#eef5f1] p-7 text-center sm:mt-8">

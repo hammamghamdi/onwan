@@ -1,19 +1,20 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { PhotoCropModal } from "@/app/components/PhotoCropModal";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChangeEvent, Suspense, useState } from "react";
+import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 
 const copy = {
   ar: {
     title: "أضف بيانات الوصول",
     addressLabel: "عنوانك",
-    emailLabel: "البريد الإلكتروني (اختياري)",
+    emailLabel: "البريد الإلكتروني",
     emailPlaceholder: "للتعديل على العنوان مستقبلاً",
     emailHelper:
-      "البريد الإلكتروني غير إلزامي، لكنه مهم إذا رغبت في تعديل بيانات العنوان مستقبلاً.",
+      "البريد الإلكتروني مهم لتعديل بيانات العنوان مستقبلاً.",
     cityLabel: "المدينة أو الحي",
     cityPlaceholder: "مثال: الرياض - حي الملقا",
     mapLabel: "رابط الخريطة",
@@ -33,9 +34,14 @@ const copy = {
     imageCompressError: "فشل ضغط الصورة.",
     imageConvertError: "فشل تحويل الصورة.",
     invalidImage: "الملف المختار ليس صورة صالحة.",
+    cropTitle: "قص الصورة بالعرض",
+    cropZoom: "تكبير الصورة",
+    useCroppedPhoto: "استخدام الصورة",
+    cancelCrop: "إلغاء",
     maxPhotos: "الحد الأعلى 3 صور فقط.",
     uploadError: "تعذر رفع الصورة",
     missingName: "اسم العنوان غير موجود.",
+    emailRequired: "أدخل البريد الإلكتروني.",
     invalidEmail: "أدخل بريدًا إلكترونيًا صحيحًا.",
     cityRequired: "أدخل المدينة أو الحي.",
     mapRequired: "أدخل رابط الخريطة.",
@@ -49,10 +55,10 @@ const copy = {
   en: {
     title: "Add arrival details",
     addressLabel: "Your address",
-    emailLabel: "Email (optional)",
+    emailLabel: "Email",
     emailPlaceholder: "For editing this address later",
     emailHelper:
-      "Email is not required, but it lets you edit this address in the future.",
+      "Email is important for editing this address in the future.",
     cityLabel: "City or district",
     cityPlaceholder: "Example: Riyadh - Al Malqa",
     mapLabel: "Map link",
@@ -72,9 +78,14 @@ const copy = {
     imageCompressError: "Failed to compress the image.",
     imageConvertError: "Failed to convert the image.",
     invalidImage: "The selected file is not a valid image.",
+    cropTitle: "Crop photo to landscape",
+    cropZoom: "Zoom photo",
+    useCroppedPhoto: "Use photo",
+    cancelCrop: "Cancel",
     maxPhotos: "Maximum 3 photos only.",
     uploadError: "Could not upload image",
     missingName: "Address name is missing.",
+    emailRequired: "Enter your email address.",
     invalidEmail: "Enter a valid email address.",
     cityRequired: "Enter the city or district.",
     mapRequired: "Enter the map link.",
@@ -101,8 +112,11 @@ function SetupContent() {
   const [instructions, setInstructions] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [pendingPortraitPhotos, setPendingPortraitPhotos] = useState<File[]>([]);
+  const [cropPhoto, setCropPhoto] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const blobPreviewUrls = useRef<string[]>([]);
 
   const extractUrl = (value: string) => {
     return value.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
@@ -110,6 +124,25 @@ function SetupContent() {
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const isPortraitPhoto = (file: File): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      image.onload = () => {
+        resolve(image.naturalHeight > image.naturalWidth);
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error(text.invalidImage));
+      };
+
+      image.src = objectUrl;
+    });
   };
 
   const compressImage = (file: File): Promise<File> => {
@@ -173,22 +206,69 @@ function SetupContent() {
     });
   };
 
-  const handlePhotos = (e: ChangeEvent<HTMLInputElement>) => {
+  const addPhotoToSelection = (photo: File) => {
+    const previewUrl = URL.createObjectURL(photo);
+    blobPreviewUrls.current = [...blobPreviewUrls.current, previewUrl];
+
+    setPhotos((current) => [...current, photo].slice(0, 3));
+    setPhotoPreviews((current) => [...current, previewUrl].slice(0, 3));
+  };
+
+  const openNextCropPhoto = (queue: File[]) => {
+    const [nextPhoto, ...remainingPhotos] = queue;
+    setPendingPortraitPhotos(remainingPhotos);
+    setCropPhoto(nextPhoto || null);
+  };
+
+  const handlePhotos = async (e: ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
+    e.target.value = "";
 
     if (selected.length > 3) {
       setMessage(text.maxPhotos);
       return;
     }
 
-    photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+    blobPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    blobPreviewUrls.current = [];
 
-    const previews = selected.map((photo) => URL.createObjectURL(photo));
-
-    setPhotos(selected);
-    setPhotoPreviews(previews);
+    setPhotos([]);
+    setPhotoPreviews([]);
     setMessage("");
+
+    const portraitPhotos: File[] = [];
+
+    try {
+      for (const photo of selected) {
+        if (await isPortraitPhoto(photo)) {
+          portraitPhotos.push(photo);
+        } else {
+          addPhotoToSelection(photo);
+        }
+      }
+
+      openNextCropPhoto(portraitPhotos);
+    } catch (error) {
+      console.log(error);
+      setMessage(error instanceof Error ? error.message : text.invalidImage);
+    }
   };
+
+  const useCroppedPhoto = (photo: File) => {
+    addPhotoToSelection(photo);
+    openNextCropPhoto(pendingPortraitPhotos);
+  };
+
+  const cancelCropPhoto = () => {
+    openNextCropPhoto(pendingPortraitPhotos);
+  };
+
+  useEffect(() => {
+    return () => {
+      blobPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      blobPreviewUrls.current = [];
+    };
+  }, []);
 
   const uploadPhotos = async () => {
     const urls: string[] = [];
@@ -231,7 +311,12 @@ function SetupContent() {
       return;
     }
 
-    if (email.trim() && !isValidEmail(email.trim())) {
+    if (!email.trim()) {
+      setMessage(text.emailRequired);
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
       setMessage(text.invalidEmail);
       return;
     }
@@ -271,7 +356,7 @@ function SetupContent() {
       const { error } = await supabase.from("profiles").insert({
         username: name,
         owner_token: ownerToken,
-        email: email.trim() ? email.trim().toLowerCase() : null,
+        email: email.trim().toLowerCase(),
         city: city.trim(),
         map_url: cleanedMapUrl,
 
@@ -333,6 +418,7 @@ function SetupContent() {
         </label>
         <input
           type="email"
+          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mb-2 w-full rounded-xl border p-4 text-black"
@@ -428,6 +514,19 @@ function SetupContent() {
           {saving ? text.saving : text.submit}
         </button>
       </div>
+
+      {cropPhoto && (
+        <PhotoCropModal
+          key={`${cropPhoto.name}-${cropPhoto.lastModified}`}
+          file={cropPhoto}
+          title={text.cropTitle}
+          zoomLabel={text.cropZoom}
+          confirmLabel={text.useCroppedPhoto}
+          cancelLabel={text.cancelCrop}
+          onConfirm={useCroppedPhoto}
+          onCancel={cancelCropPhoto}
+        />
+      )}
     </main>
   );
 }
