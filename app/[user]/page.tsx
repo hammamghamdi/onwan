@@ -55,8 +55,6 @@ const copy = {
     map: "الخريطة",
     photos: "صور الوصول",
     photoAlt: "صورة الوصول",
-    previous: "السابق",
-    next: "التالي",
     instructions: "تعليمات الوصول",
     noInstructions: "لم يتم إدخال تعليمات الوصول",
   },
@@ -72,8 +70,6 @@ const copy = {
     map: "Map",
     photos: "Access photos",
     photoAlt: "Access photo",
-    previous: "Previous",
-    next: "Next",
     instructions: "Access instructions",
     noInstructions: "No access instructions entered",
   },
@@ -317,7 +313,7 @@ export default function UserAddressPage() {
                 handlePhotoTouchEnd(event.changedTouches[0]?.clientX ?? 0)
               }
               onTouchCancel={() => setTouchStartX(null)}
-              className="overflow-hidden rounded-2xl bg-gray-100"
+              className="overflow-hidden rounded-2xl bg-gray-100 touch-pan-y"
             >
               <img
                 src={photos[currentPhoto]}
@@ -326,28 +322,6 @@ export default function UserAddressPage() {
                 className="h-64 w-full select-none object-contain"
               />
             </div>
-
-            {photos.length > 1 && (
-              <div className="mt-3 flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={prevPhoto}
-                  aria-label={text.previous}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-lg font-bold text-black"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  onClick={nextPhoto}
-                  aria-label={text.next}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-lg font-bold text-black"
-                >
-                  ›
-                </button>
-              </div>
-            )}
           </section>
         )}
 

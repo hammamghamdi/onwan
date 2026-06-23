@@ -16,7 +16,6 @@ const copy = {
     copied: "تم نسخ الرابط",
     copy: "نسخ الرابط",
     whatsapp: "مشاركة عبر واتساب",
-    nativeShare: "مشاركة",
     view: "عرض العنوان",
     edit: "تعديل العنوان",
   },
@@ -27,7 +26,6 @@ const copy = {
     copied: "Link copied",
     copy: "Copy link",
     whatsapp: "Share on WhatsApp",
-    nativeShare: "Share",
     view: "View address",
     edit: "Edit address",
   },
@@ -78,18 +76,6 @@ function SuccessContent() {
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(createAddressShareMessage(addressUrl));
-    setCopied(true);
-  };
-
-  const shareAddress = async () => {
-    const shareText = createAddressShareMessage(addressUrl);
-
-    if (navigator.share) {
-      await navigator.share({ text: shareText });
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareText);
     setCopied(true);
   };
 
@@ -149,13 +135,6 @@ function SuccessContent() {
         >
           {text.whatsapp}
         </a>
-
-        <button
-          onClick={shareAddress}
-          className="mb-4 w-full rounded-xl border border-black py-4 font-bold text-black"
-        >
-          {text.nativeShare}
-        </button>
 
         <Link
           href={`/${name}`}
