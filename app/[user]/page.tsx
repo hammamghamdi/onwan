@@ -113,6 +113,7 @@ export default function UserAddressPage() {
       } else {
         setBlockWarning(null);
         setAddress(result.address);
+        setLoaded(true);
 
         const storageKey = `onwan_address_${user}`;
         let visitorId = localStorage.getItem(storageKey);
@@ -124,11 +125,18 @@ export default function UserAddressPage() {
           isUnique = true;
         }
 
-        await supabase.from("address_visits").insert({
-          username: user,
-          visitor_id: visitorId,
-          is_unique: isUnique,
-        });
+        supabase
+          .from("address_visits")
+          .insert({
+            username: user,
+            visitor_id: visitorId,
+            is_unique: isUnique,
+          })
+          .then(({ error }) => {
+            if (error) console.log(error);
+          });
+
+        return;
       }
 
       setLoaded(true);
@@ -253,14 +261,22 @@ export default function UserAddressPage() {
             caption: null,
           })) as AddressPhoto[]);
 
+  const showPhoto = (index: number) => {
+    if (photos.length === 0) return;
+
+    const nextIndex = (index + photos.length) % photos.length;
+    setCurrentPhoto(nextIndex);
+    setLightboxPhoto((current) => (current === null ? null : nextIndex));
+  };
+
   const nextPhoto = () => {
     if (photos.length < 2) return;
-    setCurrentPhoto((prev) => (prev + 1) % photos.length);
+    showPhoto(currentPhoto + 1);
   };
 
   const prevPhoto = () => {
     if (photos.length < 2) return;
-    setCurrentPhoto((prev) => (prev - 1 + photos.length) % photos.length);
+    showPhoto(currentPhoto - 1);
   };
 
   const handlePhotoTouchEnd = (clientX: number) => {
@@ -393,6 +409,13 @@ export default function UserAddressPage() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
           onClick={() => setLightboxPhoto(null)}
+          onTouchStart={(event) =>
+            setTouchStartX(event.touches[0]?.clientX ?? null)
+          }
+          onTouchEnd={(event) =>
+            handlePhotoTouchEnd(event.changedTouches[0]?.clientX ?? 0)
+          }
+          onTouchCancel={() => setTouchStartX(null)}
         >
           <button
             type="button"

@@ -40,6 +40,30 @@ type PublicAddressPhoto = {
   caption: string | null;
 };
 
+type AddressPhotoRow = {
+  storage_path: string;
+  caption: string | null;
+};
+
+const withTimeout = async <T,>(
+  promise: PromiseLike<T>,
+  timeoutMs: number,
+  fallback: T
+) => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeout = setTimeout(() => resolve(fallback), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
+
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -137,11 +161,24 @@ export async function GET(
       );
     }
 
-    const { data: recentAccesses, error: recentAccessesError } = await supabase
+    const recentAccessesQuery = supabase
       .from("public_address_access_logs")
       .select("username")
       .eq("ip_hash", ipHash)
       .gte("created_at", windowStart.toISOString());
+
+    const addressQuery = supabase
+      .from("profiles")
+      .select(
+        "id, username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
+      )
+      .eq("username", requestedUsername)
+      .single<PublicAddress>();
+
+    const [
+      { data: recentAccesses, error: recentAccessesError },
+      { data: address, error: addressError },
+    ] = await Promise.all([recentAccessesQuery, addressQuery]);
 
     if (recentAccessesError) {
       console.error("Rate limit access count failed", recentAccessesError);
@@ -175,23 +212,28 @@ export async function GET(
       return blockedResponse();
     }
 
-    const { data: address, error: addressError } = await supabase
-      .from("profiles")
-      .select(
-        "id, username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
-      )
-      .eq("username", requestedUsername)
-      .single<PublicAddress>();
-
     if (addressError || !address) {
       return NextResponse.json({ status: "not_found" }, { status: 404 });
     }
 
-    const { data: photoRows, error: photosError } = await supabase
-      .from("address_photos")
-      .select("storage_path, display_order, caption")
-      .eq("profile_id", address.id)
-      .order("display_order", { ascending: true });
+    const photosResult = await withTimeout<{
+      data: AddressPhotoRow[] | null;
+      error: { message: string } | null;
+    }>(
+      supabase
+        .from("address_photos")
+        .select("storage_path, display_order, caption")
+        .eq("profile_id", address.id)
+        .order("display_order", { ascending: true })
+        .returns<AddressPhotoRow[]>(),
+      1500,
+      {
+        data: null,
+        error: { message: "Address photos lookup timed out" },
+      }
+    );
+
+    const { data: photoRows, error: photosError } = photosResult;
 
     if (photosError) {
       console.error("Address photos lookup failed", photosError);

@@ -46,6 +46,7 @@ const copy = {
     photoAlt: "صورة الوصول",
     replacePhoto: "استبدال الصورة",
     addPhoto: "إضافة صورة",
+    close: "إغلاق",
     imageReadError: "فشل قراءة الصورة.",
     imageCompressError: "فشل ضغط الصورة.",
     imageConvertError: "فشل تحويل الصورة.",
@@ -89,6 +90,7 @@ const copy = {
     photoAlt: "Access photo",
     replacePhoto: "Replace photo",
     addPhoto: "Add photo",
+    close: "Close",
     imageReadError: "Failed to read the image.",
     imageCompressError: "Failed to compress the image.",
     imageConvertError: "Failed to convert the image.",
@@ -132,6 +134,7 @@ function ManageContent() {
   const [message, setMessage] = useState("");
   const [canEdit, setCanEdit] = useState(false);
   const [isSuccessMessage, setIsSuccessMessage] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const blobPreviewUrls = useRef<string[]>([]);
 
   const addressUrl =
@@ -373,6 +376,20 @@ function ManageContent() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!lightboxPhoto) return;
+
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setLightboxPhoto(null);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [lightboxPhoto]);
+
   const saveChanges = async () => {
     const cleanedMapUrl = extractUrl(mapUrl);
 
@@ -584,13 +601,17 @@ function ManageContent() {
                     key={index}
                     className="rounded-xl border border-dashed border-gray-300 p-2 text-center"
                   >
-                    <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxPhoto(preview)}
+                      className="mb-2 block aspect-square w-full overflow-hidden rounded-lg bg-gray-100"
+                    >
                       <img
                         src={preview}
                         alt={`${text.photoAlt} ${index + 1}`}
                         className="h-full w-full object-cover"
                       />
-                    </div>
+                    </button>
                     <label className="mb-2 block cursor-pointer text-xs font-bold text-[#006b4f]">
                       {text.replacePhoto}
                       <input
@@ -648,6 +669,34 @@ function ManageContent() {
         )}
       </div>
 
+      {lightboxPhoto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <button
+            type="button"
+            aria-label={text.close}
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-xl font-bold text-black"
+          >
+            x
+          </button>
+
+          <div
+            className="w-full max-w-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <img
+              src={lightboxPhoto}
+              alt={text.photoAlt}
+              className="max-h-[82vh] w-full rounded-2xl object-contain shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
