@@ -197,6 +197,10 @@ function SetupContent() {
     });
   };
 
+  const createPhotoStoragePath = () => {
+    return `photos/${crypto.randomUUID()}.jpg`;
+  };
+
   const replacePhotoAtIndex = (index: number, photo: File) => {
     const previewUrl = URL.createObjectURL(photo);
     blobPreviewUrls.current = [...blobPreviewUrls.current, previewUrl];
@@ -297,16 +301,11 @@ function SetupContent() {
   }, []);
 
   const uploadPhotos = async () => {
-    const urls: string[] = [];
+    const uploadedPhotos: { publicUrl: string; storagePath: string }[] = [];
 
     for (const photo of photos) {
       const compressedPhoto = await compressImage(photo);
-
-      const fileName = `${name}-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}.jpg`;
-
-      const filePath = `${name}/${fileName}`;
+      const filePath = createPhotoStoragePath();
 
       const { error } = await supabase.storage
         .from("address-photos")
@@ -323,10 +322,13 @@ function SetupContent() {
         .from("address-photos")
         .getPublicUrl(filePath);
 
-      urls.push(data.publicUrl);
+      uploadedPhotos.push({
+        publicUrl: data.publicUrl,
+        storagePath: filePath,
+      });
     }
 
-    return urls;
+    return uploadedPhotos;
   };
 
   const saveAddress = async () => {
@@ -376,7 +378,9 @@ function SetupContent() {
     setMessage("");
 
     try {
-      const photoUrls = await uploadPhotos();
+      const uploadedPhotos = await uploadPhotos();
+      const photoUrls = uploadedPhotos.map((photo) => photo.publicUrl);
+      const photoStoragePaths = uploadedPhotos.map((photo) => photo.storagePath);
       const ownerToken = crypto.randomUUID();
 
       const { error } = await supabase.from("profiles").insert({
@@ -405,6 +409,19 @@ function SetupContent() {
         console.log(error);
         setMessage(text.saveError);
         return;
+      }
+
+      const { error: photosError } = await supabase.rpc(
+        "replace_profile_address_photos",
+        {
+          p_username: name,
+          p_owner_token: ownerToken,
+          p_storage_paths: photoStoragePaths,
+        }
+      );
+
+      if (photosError) {
+        console.log(photosError);
       }
 
       router.push(`/success?name=${name}&token=${ownerToken}`);

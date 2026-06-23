@@ -158,6 +158,19 @@ function ManageContent() {
     return value.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
   };
 
+  const extractStoragePath = (value: string) => {
+    const marker = "/storage/v1/object/public/address-photos/";
+    const markerIndex = value.indexOf(marker);
+
+    if (markerIndex === -1) return "";
+
+    return decodeURIComponent(value.slice(markerIndex + marker.length));
+  };
+
+  const createPhotoStoragePath = () => {
+    return `photos/${crypto.randomUUID()}.jpg`;
+  };
+
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -295,12 +308,9 @@ function ManageContent() {
     setMessage("");
   };
 
-  const uploadPhoto = async (photo: File, index: number) => {
+  const uploadPhoto = async (photo: File) => {
     const compressedPhoto = await compressImage(photo);
-    const fileName = `${name}-${Date.now()}-${index}-${Math.random()
-      .toString(36)
-      .slice(2)}.jpg`;
-    const filePath = `${name}/${fileName}`;
+    const filePath = createPhotoStoragePath();
 
     const { error } = await supabase.storage
       .from("address-photos")
@@ -317,7 +327,10 @@ function ManageContent() {
       .from("address-photos")
       .getPublicUrl(filePath);
 
-    return data.publicUrl;
+    return {
+      publicUrl: data.publicUrl,
+      storagePath: filePath,
+    };
   };
 
   useEffect(() => {
@@ -418,10 +431,13 @@ function ManageContent() {
 
     try {
       const nextPhotoUrls = [...photoUrls];
+      const nextPhotoStoragePaths = nextPhotoUrls.map(extractStoragePath);
 
       for (const [index, photoFile] of photoFiles.entries()) {
         if (photoFile) {
-          nextPhotoUrls[index] = await uploadPhoto(photoFile, index);
+          const uploadedPhoto = await uploadPhoto(photoFile);
+          nextPhotoUrls[index] = uploadedPhoto.publicUrl;
+          nextPhotoStoragePaths[index] = uploadedPhoto.storagePath;
         }
       }
 
@@ -445,6 +461,19 @@ function ManageContent() {
         console.log(error);
         setMessage(text.saveError);
         return;
+      }
+
+      const { error: photosError } = await supabase.rpc(
+        "replace_profile_address_photos",
+        {
+          p_username: name,
+          p_owner_token: ownerToken,
+          p_storage_paths: nextPhotoStoragePaths.filter(Boolean),
+        }
+      );
+
+      if (photosError) {
+        console.log(photosError);
       }
 
       setMapUrl(cleanedMapUrl);

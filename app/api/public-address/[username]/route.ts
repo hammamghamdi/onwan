@@ -21,6 +21,20 @@ type PublicAddressRouteContext = {
   }>;
 };
 
+type PublicAddress = {
+  id: string;
+  username: string;
+  city: string | null;
+  map_url: string | null;
+  photo1: string | null;
+  photo2: string | null;
+  photo3: string | null;
+  instructions_ar: string | null;
+  instructions_en: string | null;
+  instructions_ur: string | null;
+  instructions_bn: string | null;
+};
+
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -159,18 +173,55 @@ export async function GET(
     const { data: address, error: addressError } = await supabase
       .from("profiles")
       .select(
-        "username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
+        "id, username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
       )
       .eq("username", requestedUsername)
-      .single();
+      .single<PublicAddress>();
 
     if (addressError || !address) {
       return NextResponse.json({ status: "not_found" }, { status: 404 });
     }
 
+    const { data: photoRows, error: photosError } = await supabase
+      .from("address_photos")
+      .select("storage_path, display_order")
+      .eq("profile_id", address.id)
+      .order("display_order", { ascending: true });
+
+    if (photosError) {
+      console.error("Address photos lookup failed", photosError);
+    }
+
+    const normalizedPhotoUrls =
+      photoRows?.map((photo) => {
+        const { data } = supabase.storage
+          .from("address-photos")
+          .getPublicUrl(photo.storage_path);
+
+        return data.publicUrl;
+      }) || [];
+
+    const publicAddress = {
+      username: address.username,
+      city: address.city,
+      map_url: address.map_url,
+      photo1: address.photo1,
+      photo2: address.photo2,
+      photo3: address.photo3,
+      instructions_ar: address.instructions_ar,
+      instructions_en: address.instructions_en,
+      instructions_ur: address.instructions_ur,
+      instructions_bn: address.instructions_bn,
+    };
+
     return NextResponse.json({
       status: "ok",
-      address,
+      address: {
+        ...publicAddress,
+        photo1: normalizedPhotoUrls[0] || publicAddress.photo1,
+        photo2: normalizedPhotoUrls[1] || publicAddress.photo2,
+        photo3: normalizedPhotoUrls[2] || publicAddress.photo3,
+      },
     });
   } catch (error) {
     console.error("Public address route failed", error);
