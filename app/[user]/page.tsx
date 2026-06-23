@@ -60,6 +60,7 @@ const copy = {
     noCity: "لم يتم إدخال المدينة",
     map: "الخريطة",
     photos: "صور الوصول",
+    enlargeHint: "انقر هنا لتكبير الصورة",
     photoAlt: "صورة الوصول",
     close: "إغلاق",
     instructions: "تعليمات الوصول",
@@ -76,6 +77,7 @@ const copy = {
     noCity: "No city entered",
     map: "Map",
     photos: "Access photos",
+    enlargeHint: "Tap to enlarge photo",
     photoAlt: "Access photo",
     close: "Close",
     instructions: "Access instructions",
@@ -97,11 +99,20 @@ export default function UserAddressPage() {
 
   useEffect(() => {
     const loadAddress = async () => {
+      const startedAt = performance.now();
       const response = await fetch(
         `/api/public-address/${encodeURIComponent(user)}`,
         { cache: "no-store" }
       );
       const result = (await response.json()) as PublicAddressResponse;
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log(
+          `[public-address-page] base fetch: ${Math.round(
+            performance.now() - startedAt
+          )}ms`
+        );
+      }
 
       if (result.status === "blocked") {
         setBlockWarning(result.warning);
@@ -135,6 +146,17 @@ export default function UserAddressPage() {
           .then(({ error }) => {
             if (error) console.log(error);
           });
+
+        fetch(`/api/public-address/${encodeURIComponent(user)}?photos=1`, {
+          cache: "no-store",
+        })
+          .then((photoResponse) => photoResponse.json())
+          .then((photoResult: PublicAddressResponse) => {
+            if (photoResult.status === "ok") {
+              setAddress(photoResult.address);
+            }
+          })
+          .catch((error) => console.log(error));
 
         return;
       }
@@ -339,7 +361,9 @@ export default function UserAddressPage() {
         {photos.length > 0 && (
           <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-black">{text.photos}</h2>
+              <p className="text-sm font-bold text-[#006b4f]">
+                {text.enlargeHint}
+              </p>
 
               <span className="text-sm font-bold text-black">
                 {currentPhoto + 1} / {photos.length}
@@ -421,9 +445,11 @@ export default function UserAddressPage() {
             type="button"
             aria-label={text.close}
             onClick={() => setLightboxPhoto(null)}
-            className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-xl font-bold text-black"
+            className="absolute end-3 top-3 flex h-16 w-16 items-center justify-center rounded-full text-black"
           >
-            ×
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-xl font-bold shadow-lg">
+              x
+            </span>
           </button>
 
           <div

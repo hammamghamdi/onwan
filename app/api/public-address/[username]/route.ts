@@ -118,8 +118,20 @@ export async function GET(
   const requestedUsername = username.trim();
   const ipHash = hashIp(getVisitorIp(request));
   const userAgent = request.headers.get("user-agent") || null;
+  const includePhotos = request.nextUrl.searchParams.get("photos") === "1";
   const now = new Date();
   const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
+  const timingStart = performance.now();
+
+  const logTiming = (step: string) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        `[public-address] ${requestedUsername} ${step}: ${Math.round(
+          performance.now() - timingStart
+        )}ms`
+      );
+    }
+  };
 
   try {
     const supabase = getSupabaseAdmin();
@@ -145,6 +157,8 @@ export async function GET(
       return blockedResponse();
     }
 
+    logTiming("block-check");
+
     const { error: logError } = await supabase
       .from("public_address_access_logs")
       .insert({
@@ -160,6 +174,8 @@ export async function GET(
         { status: 500 }
       );
     }
+
+    logTiming("access-log");
 
     const recentAccessesQuery = supabase
       .from("public_address_access_logs")
@@ -179,6 +195,8 @@ export async function GET(
       { data: recentAccesses, error: recentAccessesError },
       { data: address, error: addressError },
     ] = await Promise.all([recentAccessesQuery, addressQuery]);
+
+    logTiming("rate-count-and-address");
 
     if (recentAccessesError) {
       console.error("Rate limit access count failed", recentAccessesError);
@@ -216,41 +234,6 @@ export async function GET(
       return NextResponse.json({ status: "not_found" }, { status: 404 });
     }
 
-    const photosResult = await withTimeout<{
-      data: AddressPhotoRow[] | null;
-      error: { message: string } | null;
-    }>(
-      supabase
-        .from("address_photos")
-        .select("storage_path, display_order, caption")
-        .eq("profile_id", address.id)
-        .order("display_order", { ascending: true })
-        .returns<AddressPhotoRow[]>(),
-      1500,
-      {
-        data: null,
-        error: { message: "Address photos lookup timed out" },
-      }
-    );
-
-    const { data: photoRows, error: photosError } = photosResult;
-
-    if (photosError) {
-      console.error("Address photos lookup failed", photosError);
-    }
-
-    const normalizedPhotos: PublicAddressPhoto[] =
-      photoRows?.map((photo) => {
-        const { data } = supabase.storage
-          .from("address-photos")
-          .getPublicUrl(photo.storage_path);
-
-        return {
-          url: data.publicUrl,
-          caption: photo.caption,
-        };
-      }) || [];
-
     const legacyPhotos: PublicAddressPhoto[] = [
       address.photo1,
       address.photo2,
@@ -262,8 +245,48 @@ export async function GET(
         caption: null,
       }));
 
-    const publicPhotos =
-      normalizedPhotos.length > 0 ? normalizedPhotos : legacyPhotos;
+    let publicPhotos = legacyPhotos;
+
+    if (includePhotos) {
+      const photosResult = await withTimeout<{
+        data: AddressPhotoRow[] | null;
+        error: { message: string } | null;
+      }>(
+        supabase
+          .from("address_photos")
+          .select("storage_path, display_order, caption")
+          .eq("profile_id", address.id)
+          .order("display_order", { ascending: true })
+          .returns<AddressPhotoRow[]>(),
+        1000,
+        {
+          data: null,
+          error: { message: "Address photos lookup timed out" },
+        }
+      );
+
+      const { data: photoRows, error: photosError } = photosResult;
+
+      if (photosError) {
+        console.error("Address photos lookup failed", photosError);
+      }
+
+      const normalizedPhotos: PublicAddressPhoto[] =
+        photoRows?.map((photo) => {
+          const { data } = supabase.storage
+            .from("address-photos")
+            .getPublicUrl(photo.storage_path);
+
+          return {
+            url: data.publicUrl,
+            caption: photo.caption,
+          };
+        }) || [];
+
+      publicPhotos =
+        normalizedPhotos.length > 0 ? normalizedPhotos : legacyPhotos;
+      logTiming("photos");
+    }
 
     const publicAddress = {
       username: address.username,
