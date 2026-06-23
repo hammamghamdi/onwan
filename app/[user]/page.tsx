@@ -1,9 +1,10 @@
 "use client";
 
+import { createAddressShareMessage } from "@/lib/shareAddress";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 type AddressData = {
   username: string;
@@ -39,6 +40,45 @@ type PublicAddressResponse =
       message?: string;
     };
 
+type PublicLanguage = "ar" | "en";
+
+const copy = {
+  ar: {
+    home: "الصفحة الرئيسية",
+    share: "مشاركة العنوان",
+    toggleLabel: "التبديل إلى الإنجليزية",
+    toggleText: "En",
+    loading: "جاري تحميل العنوان...",
+    notFoundTitle: "العنوان غير موجود",
+    notFoundBody: "هذا العنوان لم يتم حجزه بعد أو أن الرابط غير صحيح.",
+    noCity: "لم يتم إدخال المدينة",
+    map: "الخريطة",
+    photos: "صور الوصول",
+    photoAlt: "صورة الوصول",
+    previous: "السابق",
+    next: "التالي",
+    instructions: "تعليمات الوصول",
+    noInstructions: "لم يتم إدخال تعليمات الوصول",
+  },
+  en: {
+    home: "Home",
+    share: "Share address",
+    toggleLabel: "Switch to Arabic",
+    toggleText: "ع",
+    loading: "Loading address...",
+    notFoundTitle: "Address not found",
+    notFoundBody: "This address has not been reserved yet or the link is incorrect.",
+    noCity: "No city entered",
+    map: "Map",
+    photos: "Access photos",
+    photoAlt: "Access photo",
+    previous: "Previous",
+    next: "Next",
+    instructions: "Access instructions",
+    noInstructions: "No access instructions entered",
+  },
+};
+
 export default function UserAddressPage() {
   const params = useParams();
   const user = params.user as string;
@@ -47,6 +87,7 @@ export default function UserAddressPage() {
   const [blockWarning, setBlockWarning] = useState<BlockWarning | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
+  const [language, setLanguage] = useState<PublicLanguage>("ar");
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -90,11 +131,59 @@ export default function UserAddressPage() {
     loadAddress();
   }, [user]);
 
+  const text = copy[language];
+  const pageDirection = language === "en" ? "ltr" : "rtl";
+
+  const shareOnWhatsApp = () => {
+    const publicUrl = `${window.location.origin}/${user}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      createAddressShareMessage(publicUrl)
+    )}`;
+
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const header = (
+    <nav dir="rtl" className="mb-3 flex items-center justify-between py-3 text-sm">
+      <Link
+        href="/"
+        className="rounded-full border border-[#006b4f] px-4 py-2 font-semibold text-[#006b4f]"
+      >
+        {text.home}
+      </Link>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={shareOnWhatsApp}
+          className="rounded-full bg-[#006b4f] px-4 py-2 font-semibold text-white"
+        >
+          {text.share}
+        </button>
+
+        <button
+          type="button"
+          aria-label={text.toggleLabel}
+          onClick={() => setLanguage((current) => (current === "ar" ? "en" : "ar"))}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#006b4f] bg-white text-xs font-black text-[#006b4f]"
+        >
+          {text.toggleText}
+        </button>
+      </div>
+    </nav>
+  );
+
   if (!loaded) {
     return (
-      <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-4 text-black">
-        <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 text-center shadow-sm">
-          جاري تحميل العنوان...
+      <main
+        dir={pageDirection}
+        className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+      >
+        <div className="mx-auto w-full max-w-sm">
+          {header}
+          <div className="rounded-3xl bg-white p-5 text-center shadow-sm">
+            {text.loading}
+          </div>
         </div>
       </main>
     );
@@ -117,14 +206,18 @@ export default function UserAddressPage() {
 
   if (!address) {
     return (
-      <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-4 text-black">
-        <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 text-center shadow-sm">
-          <h1 className="mb-3 text-2xl font-bold text-black">
-            العنوان غير موجود
-          </h1>
-          <p className="text-black">
-            هذا العنوان لم يتم حجزه بعد أو أن الرابط غير صحيح.
-          </p>
+      <main
+        dir={pageDirection}
+        className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+      >
+        <div className="mx-auto w-full max-w-sm">
+          {header}
+          <div className="rounded-3xl bg-white p-5 text-center shadow-sm">
+            <h1 className="mb-3 text-2xl font-bold text-black">
+              {text.notFoundTitle}
+            </h1>
+            <p className="text-black">{text.notFoundBody}</p>
+          </div>
         </div>
       </main>
     );
@@ -143,8 +236,13 @@ export default function UserAddressPage() {
   };
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black">
+    <main
+      dir={pageDirection}
+      className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+    >
       <div className="mx-auto w-full max-w-sm">
+        {header}
+
         <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
           <h1 className="mb-3 text-center text-2xl font-bold text-black">
             {address.username}
@@ -152,7 +250,7 @@ export default function UserAddressPage() {
 
           <div className="flex items-center gap-2">
             <div className="flex-1 px-1 py-3 text-base font-bold text-black">
-              {address.city || "لم يتم إدخال المدينة"}
+              {address.city || text.noCity}
             </div>
 
             {address.map_url && (
@@ -162,7 +260,7 @@ export default function UserAddressPage() {
                 rel="noopener noreferrer"
                 className="rounded-2xl bg-[#006b4f] px-4 py-3 text-sm font-bold text-white"
               >
-                الخريطة
+                {text.map}
               </a>
             )}
           </div>
@@ -171,7 +269,7 @@ export default function UserAddressPage() {
         {photos.length > 0 && (
           <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-black">صور الوصول</h2>
+              <h2 className="text-lg font-bold text-black">{text.photos}</h2>
 
               <span className="text-sm font-bold text-black">
                 {currentPhoto + 1} / {photos.length}
@@ -181,7 +279,7 @@ export default function UserAddressPage() {
             <div className="overflow-hidden rounded-2xl bg-gray-100">
               <img
                 src={photos[currentPhoto]}
-                alt={`صورة الوصول ${currentPhoto + 1}`}
+                alt={`${text.photoAlt} ${currentPhoto + 1}`}
                 className="h-64 w-full object-contain"
               />
             </div>
@@ -193,7 +291,7 @@ export default function UserAddressPage() {
                   onClick={prevPhoto}
                   className="flex-1 rounded-xl border border-black py-3 text-sm font-bold text-black"
                 >
-                  السابق
+                  {text.previous}
                 </button>
 
                 <button
@@ -201,7 +299,7 @@ export default function UserAddressPage() {
                   onClick={nextPhoto}
                   className="flex-1 rounded-xl border border-black py-3 text-sm font-bold text-black"
                 >
-                  التالي
+                  {text.next}
                 </button>
               </div>
             )}
@@ -210,11 +308,11 @@ export default function UserAddressPage() {
 
         <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-bold text-black">
-            تعليمات الوصول
+            {text.instructions}
           </h2>
 
           <div className="space-y-2 text-base leading-7 text-black">
-            <p>{address.instructions_ar || "لم يتم إدخال تعليمات الوصول"}</p>
+            <p>{address.instructions_ar || text.noInstructions}</p>
 
             {address.instructions_en &&
               address.instructions_en !== address.instructions_ar && (
@@ -232,13 +330,6 @@ export default function UserAddressPage() {
               )}
           </div>
         </section>
-
-        <Link
-          href="/"
-          className="mb-3 block w-full rounded-3xl bg-black py-5 text-center text-lg font-bold text-white shadow-sm"
-        >
-          أنشئ عنوانك الآن
-        </Link>
       </div>
     </main>
   );
