@@ -18,29 +18,54 @@ type AddressData = {
   instructions_bn: string | null;
 };
 
+type BlockWarning = {
+  ar: string;
+  en: string;
+  ur: string;
+  bn: string;
+};
+
+type PublicAddressResponse =
+  | {
+      status: "ok";
+      address: AddressData;
+    }
+  | {
+      status: "blocked";
+      warning: BlockWarning;
+    }
+  | {
+      status: "not_found" | "error";
+      message?: string;
+    };
+
 export default function UserAddressPage() {
   const params = useParams();
   const user = params.user as string;
 
   const [address, setAddress] = useState<AddressData | null>(null);
+  const [blockWarning, setBlockWarning] = useState<BlockWarning | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
 
   useEffect(() => {
     const loadAddress = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(
-          "username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
-        )
-        .eq("username", user)
-        .single();
+      const response = await fetch(
+        `/api/public-address/${encodeURIComponent(user)}`,
+        { cache: "no-store" }
+      );
+      const result = (await response.json()) as PublicAddressResponse;
 
-      if (error) {
-        console.log(error);
+      if (result.status === "blocked") {
+        setBlockWarning(result.warning);
+        setAddress(null);
+      } else if (result.status !== "ok") {
+        console.log(result.message || result.status);
+        setBlockWarning(null);
         setAddress(null);
       } else {
-        setAddress(data);
+        setBlockWarning(null);
+        setAddress(result.address);
 
         const storageKey = `onwan_address_${user}`;
         let visitorId = localStorage.getItem(storageKey);
@@ -70,6 +95,21 @@ export default function UserAddressPage() {
       <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-4 text-black">
         <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 text-center shadow-sm">
           جاري تحميل العنوان...
+        </div>
+      </main>
+    );
+  }
+
+  if (blockWarning) {
+    return (
+      <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-4 text-black">
+        <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-sm">
+          <div className="space-y-4 text-sm font-bold leading-7 text-black">
+            <p>{blockWarning.ar}</p>
+            <p dir="ltr">{blockWarning.en}</p>
+            <p dir="rtl">{blockWarning.ur}</p>
+            <p dir="ltr">{blockWarning.bn}</p>
+          </div>
         </div>
       </main>
     );
