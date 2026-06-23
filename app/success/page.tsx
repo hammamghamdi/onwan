@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createAddressShareMessage } from "@/lib/shareAddress";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -15,9 +16,9 @@ const copy = {
     copied: "تم نسخ الرابط",
     copy: "نسخ الرابط",
     whatsapp: "مشاركة عبر واتساب",
+    nativeShare: "مشاركة",
     view: "عرض العنوان",
     edit: "تعديل العنوان",
-    whatsappText: "هذا عنواني للوصول:",
   },
   en: {
     title: "Your address was created successfully",
@@ -26,9 +27,9 @@ const copy = {
     copied: "Link copied",
     copy: "Copy link",
     whatsapp: "Share on WhatsApp",
+    nativeShare: "Share",
     view: "View address",
     edit: "Edit address",
-    whatsappText: "This is my address for arrival:",
   },
 };
 
@@ -76,7 +77,19 @@ function SuccessContent() {
   }, [addressUrl, name]);
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(addressUrl);
+    await navigator.clipboard.writeText(createAddressShareMessage(addressUrl));
+    setCopied(true);
+  };
+
+  const shareAddress = async () => {
+    const shareText = createAddressShareMessage(addressUrl);
+
+    if (navigator.share) {
+      await navigator.share({ text: shareText });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareText);
     setCopied(true);
   };
 
@@ -89,7 +102,7 @@ function SuccessContent() {
     link.click();
   };
 
-  const whatsappText = encodeURIComponent(`${text.whatsappText}\n${addressUrl}`);
+  const whatsappText = encodeURIComponent(createAddressShareMessage(addressUrl));
 
   return (
     <main
@@ -136,6 +149,13 @@ function SuccessContent() {
         >
           {text.whatsapp}
         </a>
+
+        <button
+          onClick={shareAddress}
+          className="mb-4 w-full rounded-xl border border-black py-4 font-bold text-black"
+        >
+          {text.nativeShare}
+        </button>
 
         <Link
           href={`/${name}`}

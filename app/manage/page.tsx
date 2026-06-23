@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
@@ -210,7 +211,7 @@ function ManageContent() {
   };
 
   const copyPublicLink = async () => {
-    await navigator.clipboard.writeText(addressUrl);
+    await navigator.clipboard.writeText(createAddressShareMessage(addressUrl));
     setCopied(true);
   };
 
