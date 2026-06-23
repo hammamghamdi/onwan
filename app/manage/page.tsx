@@ -53,8 +53,10 @@ const copy = {
     invalidImage: "الملف المختار ليس صورة صالحة.",
     cropTitle: "قص الصورة بالعرض",
     cropZoom: "تكبير الصورة",
+    cropPhoto: "قص الصورة",
     useCroppedPhoto: "استخدام الصورة",
     cancelCrop: "إلغاء",
+    deletePhoto: "حذف",
     uploadError: "تعذر رفع الصورة",
     unknownUploadError: "تعذر رفع الصورة: خطأ غير معروف.",
     instructionsLabel: "تعليمات الوصول",
@@ -99,8 +101,10 @@ const copy = {
     invalidImage: "The selected file is not a valid image.",
     cropTitle: "Crop photo to landscape",
     cropZoom: "Zoom photo",
+    cropPhoto: "Crop photo",
     useCroppedPhoto: "Use photo",
     cancelCrop: "Cancel",
+    deletePhoto: "Delete",
     uploadError: "Could not upload image",
     unknownUploadError: "Could not upload image: unknown error.",
     instructionsLabel: "Arrival instructions",
@@ -215,25 +219,6 @@ function ManageContent() {
     });
   };
 
-  const isPortraitPhoto = (file: File): Promise<boolean> => {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      const objectUrl = URL.createObjectURL(file);
-
-      image.onload = () => {
-        resolve(image.naturalHeight > image.naturalWidth);
-        URL.revokeObjectURL(objectUrl);
-      };
-
-      image.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error(text.invalidImage));
-      };
-
-      image.src = objectUrl;
-    });
-  };
-
   const setPhotoSlot = (index: number, photo: File) => {
     const previewUrl = URL.createObjectURL(photo);
 
@@ -261,7 +246,7 @@ function ManageContent() {
     setMessage("");
   };
 
-  const handlePhotoChange = async (
+  const handlePhotoChange = (
     index: number,
     event: ChangeEvent<HTMLInputElement>
   ) => {
@@ -270,17 +255,7 @@ function ManageContent() {
 
     if (!selectedPhoto) return;
 
-    try {
-      if (await isPortraitPhoto(selectedPhoto)) {
-        setCropRequest({ file: selectedPhoto, index });
-        return;
-      }
-
-      setPhotoSlot(index, selectedPhoto);
-    } catch (error) {
-      console.log(error);
-      setMessage(error instanceof Error ? error.message : text.invalidImage);
-    }
+    setPhotoSlot(index, selectedPhoto);
   };
 
   const useCroppedPhoto = (photo: File) => {
@@ -288,6 +263,36 @@ function ManageContent() {
 
     setPhotoSlot(cropRequest.index, photo);
     setCropRequest(null);
+  };
+
+  const deletePhoto = (index: number) => {
+    setPhotoUrls((current) => {
+      const next = [...current];
+      next[index] = "";
+      return next;
+    });
+
+    setPhotoPreviews((current) => {
+      if (current[index]?.startsWith("blob:")) {
+        URL.revokeObjectURL(current[index]);
+        blobPreviewUrls.current = blobPreviewUrls.current.filter(
+          (url) => url !== current[index]
+        );
+      }
+
+      const next = [...current];
+      next[index] = "";
+      return next;
+    });
+
+    setPhotoFiles((current) => {
+      const next = [...current];
+      next[index] = null;
+      return next;
+    });
+
+    setCropRequest(null);
+    setMessage("");
   };
 
   const uploadPhoto = async (photo: File, index: number) => {
@@ -545,35 +550,62 @@ function ManageContent() {
             </div>
 
             <div className="mb-5 grid grid-cols-3 gap-2">
-              {photoPreviews.map((preview, index) => (
-                <label
-                  key={index}
-                  className="block cursor-pointer rounded-xl border border-dashed border-gray-300 p-2 text-center"
-                >
-                  <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt={`${text.photoAlt} ${index + 1}`}
-                        className="h-full w-full object-cover"
+              {photoPreviews.map((preview, index) => {
+                const selectedPhotoFile = photoFiles[index];
+
+                return (
+                  <div
+                    key={index}
+                    className="rounded-xl border border-dashed border-gray-300 p-2 text-center"
+                  >
+                    <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
+                      {preview ? (
+                        <img
+                          src={preview}
+                          alt={`${text.photoAlt} ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-2xl font-bold text-gray-300">
+                          +
+                        </div>
+                      )}
+                    </div>
+                    <label className="mb-2 block cursor-pointer text-xs font-bold text-[#006b4f]">
+                      {preview ? text.replacePhoto : text.addPhoto}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handlePhotoChange(index, event)}
+                        className="sr-only"
                       />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-2xl font-bold text-gray-300">
-                        +
-                      </div>
+                    </label>
+                    {selectedPhotoFile && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCropRequest({
+                            file: selectedPhotoFile,
+                            index,
+                          })
+                        }
+                        className="mb-2 block w-full text-xs font-bold text-[#006b4f]"
+                      >
+                        {text.cropPhoto}
+                      </button>
+                    )}
+                    {preview && (
+                      <button
+                        type="button"
+                        onClick={() => deletePhoto(index)}
+                        className="block w-full text-xs font-bold text-red-700"
+                      >
+                        {text.deletePhoto}
+                      </button>
                     )}
                   </div>
-                  <span className="text-xs font-bold text-[#006b4f]">
-                    {preview ? text.replacePhoto : text.addPhoto}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => handlePhotoChange(index, event)}
-                    className="sr-only"
-                  />
-                </label>
-              ))}
+                );
+              })}
             </div>
 
             <label className="mb-2 block font-bold text-black">

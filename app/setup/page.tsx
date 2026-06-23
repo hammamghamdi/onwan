@@ -36,8 +36,12 @@ const copy = {
     invalidImage: "الملف المختار ليس صورة صالحة.",
     cropTitle: "قص الصورة بالعرض",
     cropZoom: "تكبير الصورة",
+    cropPhoto: "قص الصورة",
     useCroppedPhoto: "استخدام الصورة",
     cancelCrop: "إلغاء",
+    replacePhoto: "استبدال الصورة",
+    deletePhoto: "حذف",
+    addPhotos: "إضافة صور",
     maxPhotos: "الحد الأعلى 3 صور فقط.",
     uploadError: "تعذر رفع الصورة",
     missingName: "اسم العنوان غير موجود.",
@@ -80,8 +84,12 @@ const copy = {
     invalidImage: "The selected file is not a valid image.",
     cropTitle: "Crop photo to landscape",
     cropZoom: "Zoom photo",
+    cropPhoto: "Crop photo",
     useCroppedPhoto: "Use photo",
     cancelCrop: "Cancel",
+    replacePhoto: "Replace photo",
+    deletePhoto: "Delete",
+    addPhotos: "Add photos",
     maxPhotos: "Maximum 3 photos only.",
     uploadError: "Could not upload image",
     missingName: "Address name is missing.",
@@ -112,8 +120,10 @@ function SetupContent() {
   const [instructions, setInstructions] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [pendingPortraitPhotos, setPendingPortraitPhotos] = useState<File[]>([]);
-  const [cropPhoto, setCropPhoto] = useState<File | null>(null);
+  const [cropRequest, setCropRequest] = useState<{
+    file: File;
+    index: number;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const blobPreviewUrls = useRef<string[]>([]);
@@ -124,25 +134,6 @@ function SetupContent() {
 
   const isValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
-
-  const isPortraitPhoto = (file: File): Promise<boolean> => {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      const objectUrl = URL.createObjectURL(file);
-
-      image.onload = () => {
-        resolve(image.naturalHeight > image.naturalWidth);
-        URL.revokeObjectURL(objectUrl);
-      };
-
-      image.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error(text.invalidImage));
-      };
-
-      image.src = objectUrl;
-    });
   };
 
   const compressImage = (file: File): Promise<File> => {
@@ -206,7 +197,31 @@ function SetupContent() {
     });
   };
 
-  const addPhotoToSelection = (photo: File) => {
+  const replacePhotoAtIndex = (index: number, photo: File) => {
+    const previewUrl = URL.createObjectURL(photo);
+    blobPreviewUrls.current = [...blobPreviewUrls.current, previewUrl];
+
+    setPhotos((current) => {
+      const next = [...current];
+      next[index] = photo;
+      return next;
+    });
+
+    setPhotoPreviews((current) => {
+      if (current[index]?.startsWith("blob:")) {
+        URL.revokeObjectURL(current[index]);
+        blobPreviewUrls.current = blobPreviewUrls.current.filter(
+          (url) => url !== current[index]
+        );
+      }
+
+      const next = [...current];
+      next[index] = previewUrl;
+      return next;
+    });
+  };
+
+  const appendPhoto = (photo: File) => {
     const previewUrl = URL.createObjectURL(photo);
     blobPreviewUrls.current = [...blobPreviewUrls.current, previewUrl];
 
@@ -214,53 +229,64 @@ function SetupContent() {
     setPhotoPreviews((current) => [...current, previewUrl].slice(0, 3));
   };
 
-  const openNextCropPhoto = (queue: File[]) => {
-    const [nextPhoto, ...remainingPhotos] = queue;
-    setPendingPortraitPhotos(remainingPhotos);
-    setCropPhoto(nextPhoto || null);
+  const deletePhoto = (index: number) => {
+    setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index));
+    setPhotoPreviews((current) => {
+      if (current[index]?.startsWith("blob:")) {
+        URL.revokeObjectURL(current[index]);
+        blobPreviewUrls.current = blobPreviewUrls.current.filter(
+          (url) => url !== current[index]
+        );
+      }
+
+      return current.filter((_, photoIndex) => photoIndex !== index);
+    });
+    setCropRequest(null);
   };
 
-  const handlePhotos = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePhotos = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
     e.target.value = "";
 
-    if (selected.length > 3) {
+    const remainingSlots = 3 - photos.length;
+
+    if (remainingSlots <= 0) {
       setMessage(text.maxPhotos);
       return;
     }
 
-    blobPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
-    blobPreviewUrls.current = [];
+    const acceptedPhotos = selected.slice(0, remainingSlots);
 
-    setPhotos([]);
-    setPhotoPreviews([]);
+    acceptedPhotos.forEach((photo) => appendPhoto(photo));
+    setMessage(selected.length > remainingSlots ? text.maxPhotos : "");
+  };
+
+  const handleReplacePhoto = (
+    index: number,
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedPhoto = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!selectedPhoto) return;
+
+    replacePhotoAtIndex(index, selectedPhoto);
     setMessage("");
+  };
 
-    const portraitPhotos: File[] = [];
+  const cropSelectedPhoto = (index: number) => {
+    const selectedPhoto = photos[index];
 
-    try {
-      for (const photo of selected) {
-        if (await isPortraitPhoto(photo)) {
-          portraitPhotos.push(photo);
-        } else {
-          addPhotoToSelection(photo);
-        }
-      }
-
-      openNextCropPhoto(portraitPhotos);
-    } catch (error) {
-      console.log(error);
-      setMessage(error instanceof Error ? error.message : text.invalidImage);
+    if (selectedPhoto) {
+      setCropRequest({ file: selectedPhoto, index });
     }
   };
 
   const useCroppedPhoto = (photo: File) => {
-    addPhotoToSelection(photo);
-    openNextCropPhoto(pendingPortraitPhotos);
-  };
+    if (!cropRequest) return;
 
-  const cancelCropPhoto = () => {
-    openNextCropPhoto(pendingPortraitPhotos);
+    replacePhotoAtIndex(cropRequest.index, photo);
+    setCropRequest(null);
   };
 
   useEffect(() => {
@@ -450,14 +476,6 @@ function SetupContent() {
           {text.photosLabel}
         </label>
 
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handlePhotos}
-          className="mb-2 w-full rounded-xl border p-4 text-black"
-        />
-
         <p className="mb-2 text-sm text-gray-700">{text.photosHelper}</p>
 
         <div className="mb-4 rounded-2xl bg-[#eef5f1] p-3 text-sm leading-6 text-[#1f2d2b]">
@@ -472,22 +490,61 @@ function SetupContent() {
           </a>
         </div>
 
-        {photoPreviews.length > 0 && (
-          <div className="mb-4 grid grid-cols-3 gap-2">
-            {photoPreviews.map((preview, index) => (
-              <div
-                key={preview}
-                className="aspect-square overflow-hidden rounded-xl bg-gray-100"
-              >
+        <div className="mb-4 grid grid-cols-3 gap-2">
+          {photoPreviews.map((preview, index) => (
+            <div
+              key={preview}
+              className="rounded-xl border border-gray-200 p-2 text-center"
+            >
+              <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
                 <img
                   src={preview}
                   alt={`${text.photoAlt} ${index + 1}`}
                   className="h-full w-full object-cover"
                 />
               </div>
-            ))}
-          </div>
-        )}
+              <label className="mb-2 block cursor-pointer text-xs font-bold text-[#006b4f]">
+                {text.replacePhoto}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleReplacePhoto(index, event)}
+                  className="sr-only"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => cropSelectedPhoto(index)}
+                className="mb-2 block w-full text-xs font-bold text-[#006b4f]"
+              >
+                {text.cropPhoto}
+              </button>
+              <button
+                type="button"
+                onClick={() => deletePhoto(index)}
+                className="block w-full text-xs font-bold text-red-700"
+              >
+                {text.deletePhoto}
+              </button>
+            </div>
+          ))}
+
+          {photos.length < 3 && (
+            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 p-2 text-center">
+              <span className="mb-1 text-2xl font-bold text-gray-300">+</span>
+              <span className="text-xs font-bold text-[#006b4f]">
+                {text.addPhotos}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotos}
+                className="sr-only"
+              />
+            </label>
+          )}
+        </div>
 
         <label className="mb-2 block font-bold text-black">
           {text.instructionsLabel}
@@ -515,16 +572,16 @@ function SetupContent() {
         </button>
       </div>
 
-      {cropPhoto && (
+      {cropRequest && (
         <PhotoCropModal
-          key={`${cropPhoto.name}-${cropPhoto.lastModified}`}
-          file={cropPhoto}
+          key={`${cropRequest.index}-${cropRequest.file.name}-${cropRequest.file.lastModified}`}
+          file={cropRequest.file}
           title={text.cropTitle}
           zoomLabel={text.cropZoom}
           confirmLabel={text.useCroppedPhoto}
           cancelLabel={text.cancelCrop}
           onConfirm={useCroppedPhoto}
-          onCancel={cancelCropPhoto}
+          onCancel={() => setCropRequest(null)}
         />
       )}
     </main>
