@@ -35,6 +35,9 @@ const copy = {
     cityPlaceholder: "مثال: الرياض - حي الملقا",
     mapLabel: "رابط الخريطة",
     mapPlaceholder: "الصق رابط Google Maps هنا",
+    landscapePhotoNote:
+      "يفضل رفع صور الوصول بالعرض (أفقية) للحصول على أفضل نتيجة.",
+    viewPhotoExample: "شاهد المثال",
     instructionsLabel: "تعليمات الوصول",
     instructionsPlaceholder:
       "مثال: ادخل من البوابة الرئيسية، ثم اتجه يمينًا...",
@@ -63,6 +66,9 @@ const copy = {
     cityPlaceholder: "Example: Riyadh - Al Malqa",
     mapLabel: "Map link",
     mapPlaceholder: "Paste the Google Maps link here",
+    landscapePhotoNote:
+      "Landscape access photos are preferred for the best result.",
+    viewPhotoExample: "View example",
     instructionsLabel: "Arrival instructions",
     instructionsPlaceholder:
       "Example: Enter from the main gate, then turn right...",
@@ -275,6 +281,18 @@ function ManageContent() {
               className="mb-4 w-full rounded-xl border p-4 text-black"
               placeholder={text.mapPlaceholder}
             />
+
+            <div className="mb-4 rounded-2xl bg-[#eef5f1] p-3 text-sm leading-6 text-[#1f2d2b]">
+              <p className="mb-1 font-bold">{text.landscapePhotoNote}</p>
+              <a
+                href="/abdullah"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-[#006b4f] underline underline-offset-4"
+              >
+                {text.viewPhotoExample}
+              </a>
+            </div>
 
             <label className="mb-2 block font-bold text-black">
               {text.instructionsLabel}

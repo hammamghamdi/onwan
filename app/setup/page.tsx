@@ -20,6 +20,9 @@ const copy = {
     mapPlaceholder: "الصق رابط Google Maps هنا",
     photosLabel: "صور المدخل",
     photosHelper: "صورة واحدة على الأقل، والحد الأعلى 3 صور.",
+    landscapePhotoNote:
+      "يفضل رفع صور الوصول بالعرض (أفقية) للحصول على أفضل نتيجة.",
+    viewPhotoExample: "شاهد المثال",
     photoAlt: "صورة",
     instructionsLabel: "تعليمات الوصول",
     instructionsPlaceholder:
@@ -56,6 +59,9 @@ const copy = {
     mapPlaceholder: "Paste the Google Maps link here",
     photosLabel: "Entrance photos",
     photosHelper: "At least one photo, up to 3 photos.",
+    landscapePhotoNote:
+      "Landscape access photos are preferred for the best result.",
+    viewPhotoExample: "View example",
     photoAlt: "Photo",
     instructionsLabel: "Arrival instructions",
     instructionsPlaceholder:
@@ -366,7 +372,19 @@ function SetupContent() {
           className="mb-2 w-full rounded-xl border p-4 text-black"
         />
 
-        <p className="mb-4 text-sm text-gray-700">{text.photosHelper}</p>
+        <p className="mb-2 text-sm text-gray-700">{text.photosHelper}</p>
+
+        <div className="mb-4 rounded-2xl bg-[#eef5f1] p-3 text-sm leading-6 text-[#1f2d2b]">
+          <p className="mb-1 font-bold">{text.landscapePhotoNote}</p>
+          <a
+            href="/abdullah"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-[#006b4f] underline underline-offset-4"
+          >
+            {text.viewPhotoExample}
+          </a>
+        </div>
 
         {photoPreviews.length > 0 && (
           <div className="mb-4 grid grid-cols-3 gap-2">
