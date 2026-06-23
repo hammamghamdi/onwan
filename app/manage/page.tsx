@@ -1,7 +1,6 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
-import { PhotoCropModal } from "@/app/components/PhotoCropModal";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
@@ -51,11 +50,6 @@ const copy = {
     imageCompressError: "فشل ضغط الصورة.",
     imageConvertError: "فشل تحويل الصورة.",
     invalidImage: "الملف المختار ليس صورة صالحة.",
-    cropTitle: "قص الصورة بالعرض",
-    cropZoom: "تكبير الصورة",
-    cropPhoto: "قص الصورة",
-    useCroppedPhoto: "استخدام الصورة",
-    cancelCrop: "إلغاء",
     deletePhoto: "حذف",
     uploadError: "تعذر رفع الصورة",
     unknownUploadError: "تعذر رفع الصورة: خطأ غير معروف.",
@@ -99,11 +93,6 @@ const copy = {
     imageCompressError: "Failed to compress the image.",
     imageConvertError: "Failed to convert the image.",
     invalidImage: "The selected file is not a valid image.",
-    cropTitle: "Crop photo to landscape",
-    cropZoom: "Zoom photo",
-    cropPhoto: "Crop photo",
-    useCroppedPhoto: "Use photo",
-    cancelCrop: "Cancel",
     deletePhoto: "Delete",
     uploadError: "Could not upload image",
     unknownUploadError: "Could not upload image: unknown error.",
@@ -137,10 +126,6 @@ function ManageContent() {
     null,
   ]);
   const [photoPreviews, setPhotoPreviews] = useState(["", "", ""]);
-  const [cropRequest, setCropRequest] = useState<{
-    file: File;
-    index: number;
-  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -271,13 +256,6 @@ function ManageContent() {
     setPhotoSlot(index, selectedPhoto);
   };
 
-  const useCroppedPhoto = (photo: File) => {
-    if (!cropRequest) return;
-
-    setPhotoSlot(cropRequest.index, photo);
-    setCropRequest(null);
-  };
-
   const deletePhoto = (index: number) => {
     setPhotoUrls((current) => {
       const next = [...current];
@@ -304,7 +282,6 @@ function ManageContent() {
       return next;
     });
 
-    setCropRequest(null);
     setMessage("");
   };
 
@@ -580,28 +557,18 @@ function ManageContent() {
 
             <div className="mb-5 grid grid-cols-3 gap-2">
               {photoPreviews.map((preview, index) => {
-                const selectedPhotoFile = photoFiles[index];
-
-                return (
-                  <div
-                    key={index}
-                    className="rounded-xl border border-dashed border-gray-300 p-2 text-center"
-                  >
-                    <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
-                      {preview ? (
-                        <img
-                          src={preview}
-                          alt={`${text.photoAlt} ${index + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-2xl font-bold text-gray-300">
-                          +
-                        </div>
-                      )}
-                    </div>
-                    <label className="mb-2 block cursor-pointer text-xs font-bold text-[#006b4f]">
-                      {preview ? text.replacePhoto : text.addPhoto}
+                if (!preview) {
+                  return (
+                    <label
+                      key={index}
+                      className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 p-2 text-center"
+                    >
+                      <span className="mb-1 text-2xl font-bold text-gray-300">
+                        +
+                      </span>
+                      <span className="text-xs font-bold text-[#006b4f]">
+                        {text.addPhoto}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
@@ -609,29 +576,37 @@ function ManageContent() {
                         className="sr-only"
                       />
                     </label>
-                    {selectedPhotoFile && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCropRequest({
-                            file: selectedPhotoFile,
-                            index,
-                          })
-                        }
-                        className="mb-2 block w-full text-xs font-bold text-[#006b4f]"
-                      >
-                        {text.cropPhoto}
-                      </button>
-                    )}
-                    {preview && (
-                      <button
-                        type="button"
-                        onClick={() => deletePhoto(index)}
-                        className="block w-full text-xs font-bold text-red-700"
-                      >
-                        {text.deletePhoto}
-                      </button>
-                    )}
+                  );
+                }
+
+                return (
+                  <div
+                    key={index}
+                    className="rounded-xl border border-dashed border-gray-300 p-2 text-center"
+                  >
+                    <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
+                      <img
+                        src={preview}
+                        alt={`${text.photoAlt} ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <label className="mb-2 block cursor-pointer text-xs font-bold text-[#006b4f]">
+                      {text.replacePhoto}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handlePhotoChange(index, event)}
+                        className="sr-only"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => deletePhoto(index)}
+                      className="block w-full text-xs font-bold text-red-700"
+                    >
+                      {text.deletePhoto}
+                    </button>
                   </div>
                 );
               })}
@@ -673,18 +648,6 @@ function ManageContent() {
         )}
       </div>
 
-      {cropRequest && (
-        <PhotoCropModal
-          key={`${cropRequest.index}-${cropRequest.file.name}-${cropRequest.file.lastModified}`}
-          file={cropRequest.file}
-          title={text.cropTitle}
-          zoomLabel={text.cropZoom}
-          confirmLabel={text.useCroppedPhoto}
-          cancelLabel={text.cancelCrop}
-          onConfirm={useCroppedPhoto}
-          onCancel={() => setCropRequest(null)}
-        />
-      )}
     </main>
   );
 }

@@ -35,6 +35,11 @@ type PublicAddress = {
   instructions_bn: string | null;
 };
 
+type PublicAddressPhoto = {
+  url: string;
+  caption: string | null;
+};
+
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -184,7 +189,7 @@ export async function GET(
 
     const { data: photoRows, error: photosError } = await supabase
       .from("address_photos")
-      .select("storage_path, display_order")
+      .select("storage_path, display_order, caption")
       .eq("profile_id", address.id)
       .order("display_order", { ascending: true });
 
@@ -192,14 +197,31 @@ export async function GET(
       console.error("Address photos lookup failed", photosError);
     }
 
-    const normalizedPhotoUrls =
+    const normalizedPhotos: PublicAddressPhoto[] =
       photoRows?.map((photo) => {
         const { data } = supabase.storage
           .from("address-photos")
           .getPublicUrl(photo.storage_path);
 
-        return data.publicUrl;
+        return {
+          url: data.publicUrl,
+          caption: photo.caption,
+        };
       }) || [];
+
+    const legacyPhotos: PublicAddressPhoto[] = [
+      address.photo1,
+      address.photo2,
+      address.photo3,
+    ]
+      .filter(Boolean)
+      .map((url) => ({
+        url: url as string,
+        caption: null,
+      }));
+
+    const publicPhotos =
+      normalizedPhotos.length > 0 ? normalizedPhotos : legacyPhotos;
 
     const publicAddress = {
       username: address.username,
@@ -218,9 +240,10 @@ export async function GET(
       status: "ok",
       address: {
         ...publicAddress,
-        photo1: normalizedPhotoUrls[0] || publicAddress.photo1,
-        photo2: normalizedPhotoUrls[1] || publicAddress.photo2,
-        photo3: normalizedPhotoUrls[2] || publicAddress.photo3,
+        photo1: publicPhotos[0]?.url || publicAddress.photo1,
+        photo2: publicPhotos[1]?.url || publicAddress.photo2,
+        photo3: publicPhotos[2]?.url || publicAddress.photo3,
+        photos: publicPhotos,
       },
     });
   } catch (error) {

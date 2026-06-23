@@ -1,7 +1,6 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
-import { PhotoCropModal } from "@/app/components/PhotoCropModal";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,11 +33,6 @@ const copy = {
     imageCompressError: "فشل ضغط الصورة.",
     imageConvertError: "فشل تحويل الصورة.",
     invalidImage: "الملف المختار ليس صورة صالحة.",
-    cropTitle: "قص الصورة بالعرض",
-    cropZoom: "تكبير الصورة",
-    cropPhoto: "قص الصورة",
-    useCroppedPhoto: "استخدام الصورة",
-    cancelCrop: "إلغاء",
     replacePhoto: "استبدال الصورة",
     deletePhoto: "حذف",
     addPhotos: "إضافة صور",
@@ -82,11 +76,6 @@ const copy = {
     imageCompressError: "Failed to compress the image.",
     imageConvertError: "Failed to convert the image.",
     invalidImage: "The selected file is not a valid image.",
-    cropTitle: "Crop photo to landscape",
-    cropZoom: "Zoom photo",
-    cropPhoto: "Crop photo",
-    useCroppedPhoto: "Use photo",
-    cancelCrop: "Cancel",
     replacePhoto: "Replace photo",
     deletePhoto: "Delete",
     addPhotos: "Add photos",
@@ -120,10 +109,6 @@ function SetupContent() {
   const [instructions, setInstructions] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [cropRequest, setCropRequest] = useState<{
-    file: File;
-    index: number;
-  } | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const blobPreviewUrls = useRef<string[]>([]);
@@ -245,7 +230,6 @@ function SetupContent() {
 
       return current.filter((_, photoIndex) => photoIndex !== index);
     });
-    setCropRequest(null);
   };
 
   const handlePhotos = (e: ChangeEvent<HTMLInputElement>) => {
@@ -276,21 +260,6 @@ function SetupContent() {
 
     replacePhotoAtIndex(index, selectedPhoto);
     setMessage("");
-  };
-
-  const cropSelectedPhoto = (index: number) => {
-    const selectedPhoto = photos[index];
-
-    if (selectedPhoto) {
-      setCropRequest({ file: selectedPhoto, index });
-    }
-  };
-
-  const useCroppedPhoto = (photo: File) => {
-    if (!cropRequest) return;
-
-    replacePhotoAtIndex(cropRequest.index, photo);
-    setCropRequest(null);
   };
 
   useEffect(() => {
@@ -531,13 +500,6 @@ function SetupContent() {
               </label>
               <button
                 type="button"
-                onClick={() => cropSelectedPhoto(index)}
-                className="mb-2 block w-full text-xs font-bold text-[#006b4f]"
-              >
-                {text.cropPhoto}
-              </button>
-              <button
-                type="button"
                 onClick={() => deletePhoto(index)}
                 className="block w-full text-xs font-bold text-red-700"
               >
@@ -589,18 +551,6 @@ function SetupContent() {
         </button>
       </div>
 
-      {cropRequest && (
-        <PhotoCropModal
-          key={`${cropRequest.index}-${cropRequest.file.name}-${cropRequest.file.lastModified}`}
-          file={cropRequest.file}
-          title={text.cropTitle}
-          zoomLabel={text.cropZoom}
-          confirmLabel={text.useCroppedPhoto}
-          cancelLabel={text.cancelCrop}
-          onConfirm={useCroppedPhoto}
-          onCancel={() => setCropRequest(null)}
-        />
-      )}
     </main>
   );
 }

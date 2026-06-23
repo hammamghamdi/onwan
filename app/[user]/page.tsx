@@ -13,10 +13,16 @@ type AddressData = {
   photo1: string | null;
   photo2: string | null;
   photo3: string | null;
+  photos?: AddressPhoto[];
   instructions_ar: string | null;
   instructions_en: string | null;
   instructions_ur: string | null;
   instructions_bn: string | null;
+};
+
+type AddressPhoto = {
+  url: string;
+  caption: string | null;
 };
 
 type BlockWarning = {
@@ -55,6 +61,7 @@ const copy = {
     map: "الخريطة",
     photos: "صور الوصول",
     photoAlt: "صورة الوصول",
+    close: "إغلاق",
     instructions: "تعليمات الوصول",
     noInstructions: "لم يتم إدخال تعليمات الوصول",
   },
@@ -70,6 +77,7 @@ const copy = {
     map: "Map",
     photos: "Access photos",
     photoAlt: "Access photo",
+    close: "Close",
     instructions: "Access instructions",
     noInstructions: "No access instructions entered",
   },
@@ -85,6 +93,7 @@ export default function UserAddressPage() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [language, setLanguage] = useState<PublicLanguage>("ar");
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<number | null>(null);
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -127,6 +136,20 @@ export default function UserAddressPage() {
 
     loadAddress();
   }, [user]);
+
+  useEffect(() => {
+    if (lightboxPhoto === null) return;
+
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setLightboxPhoto(null);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [lightboxPhoto]);
 
   const text = copy[language];
   const pageDirection = language === "en" ? "ltr" : "rtl";
@@ -220,9 +243,15 @@ export default function UserAddressPage() {
     );
   }
 
-  const photos = [address.photo1, address.photo2, address.photo3].filter(
-    Boolean
-  ) as string[];
+  const photos =
+    address.photos && address.photos.length > 0
+      ? address.photos
+      : ([address.photo1, address.photo2, address.photo3]
+          .filter(Boolean)
+          .map((url) => ({
+            url: url as string,
+            caption: null,
+          })) as AddressPhoto[]);
 
   const nextPhoto = () => {
     if (photos.length < 2) return;
@@ -316,12 +345,19 @@ export default function UserAddressPage() {
               className="overflow-hidden rounded-2xl bg-gray-100 touch-pan-y"
             >
               <img
-                src={photos[currentPhoto]}
+                src={photos[currentPhoto].url}
                 alt={`${text.photoAlt} ${currentPhoto + 1}`}
                 draggable={false}
-                className="h-64 w-full select-none object-contain"
+                onClick={() => setLightboxPhoto(currentPhoto)}
+                className="h-64 w-full select-none rounded-2xl object-contain shadow-sm"
               />
             </div>
+
+            {photos[currentPhoto].caption && (
+              <p className="mt-3 text-center text-sm leading-6 text-gray-700">
+                {photos[currentPhoto].caption}
+              </p>
+            )}
           </section>
         )}
 
@@ -350,6 +386,41 @@ export default function UserAddressPage() {
           </div>
         </section>
       </div>
+
+      {lightboxPhoto !== null && photos[lightboxPhoto] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <button
+            type="button"
+            aria-label={text.close}
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-xl font-bold text-black"
+          >
+            ×
+          </button>
+
+          <div
+            className="w-full max-w-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <img
+              src={photos[lightboxPhoto].url}
+              alt={`${text.photoAlt} ${lightboxPhoto + 1}`}
+              className="max-h-[82vh] w-full rounded-2xl object-contain shadow-2xl"
+            />
+
+            {photos[lightboxPhoto].caption && (
+              <p className="mt-4 text-center text-sm leading-6 text-white">
+                {photos[lightboxPhoto].caption}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
