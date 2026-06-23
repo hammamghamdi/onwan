@@ -45,6 +45,14 @@ type AddressPhotoRow = {
   caption: string | null;
 };
 
+type RateLimitResult = {
+  is_blocked: boolean;
+  reason: string;
+  distinct_usernames: number;
+};
+
+type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
+
 const withTimeout = async <T,>(
   promise: PromiseLike<T>,
   timeoutMs: number,
@@ -110,6 +118,93 @@ const blockedResponse = () =>
     { status: 429 }
   );
 
+const isMissingRpcError = (error: { code?: string; message?: string }) => {
+  return (
+    error.code === "PGRST202" ||
+    error.message?.toLowerCase().includes("function") ||
+    error.message?.toLowerCase().includes("schema cache")
+  );
+};
+
+const checkRateLimitFallback = async ({
+  supabase,
+  ipHash,
+  username,
+  userAgent,
+  now,
+  windowStart,
+  blockedUntil,
+}: {
+  supabase: SupabaseAdmin;
+  ipHash: string;
+  username: string;
+  userAgent: string | null;
+  now: Date;
+  windowStart: Date;
+  blockedUntil: Date;
+}) => {
+  const { data: activeBlock, error: activeBlockError } = await supabase
+    .from("public_address_blocks")
+    .select("blocked_until")
+    .eq("ip_hash", ipHash)
+    .gt("blocked_until", now.toISOString())
+    .order("blocked_until", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (activeBlockError) {
+    return { isBlocked: false, error: activeBlockError };
+  }
+
+  if (activeBlock) {
+    return { isBlocked: true, error: null };
+  }
+
+  const { error: logError } = await supabase
+    .from("public_address_access_logs")
+    .insert({
+      ip_hash: ipHash,
+      username,
+      user_agent: userAgent,
+    });
+
+  if (logError) {
+    return { isBlocked: false, error: logError };
+  }
+
+  const { data: recentAccesses, error: recentAccessesError } = await supabase
+    .from("public_address_access_logs")
+    .select("username")
+    .eq("ip_hash", ipHash)
+    .gte("created_at", windowStart.toISOString());
+
+  if (recentAccessesError) {
+    return { isBlocked: false, error: recentAccessesError };
+  }
+
+  const distinctUsernames = new Set(
+    recentAccesses?.map((access) => access.username) || []
+  );
+
+  if (distinctUsernames.size >= DISTINCT_USERNAME_LIMIT) {
+    const { error: blockError } = await supabase
+      .from("public_address_blocks")
+      .insert({
+        ip_hash: ipHash,
+        blocked_until: blockedUntil.toISOString(),
+        reason: "Opened 5 different usernames within 5 minutes",
+      });
+
+    if (blockError) {
+      return { isBlocked: false, error: blockError };
+    }
+
+    return { isBlocked: true, error: null };
+  }
+
+  return { isBlocked: false, error: null };
+};
+
 export async function GET(
   request: NextRequest,
   context: PublicAddressRouteContext
@@ -121,6 +216,7 @@ export async function GET(
   const includePhotos = request.nextUrl.searchParams.get("photos") === "1";
   const now = new Date();
   const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
+  const blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MS);
   const timingStart = performance.now();
 
   const logTiming = (step: string) => {
@@ -136,52 +232,18 @@ export async function GET(
   try {
     const supabase = getSupabaseAdmin();
 
-    const { data: activeBlock, error: activeBlockError } = await supabase
-      .from("public_address_blocks")
-      .select("blocked_until")
-      .eq("ip_hash", ipHash)
-      .gt("blocked_until", now.toISOString())
-      .order("blocked_until", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (activeBlockError) {
-      console.error("Rate limit block check failed", activeBlockError);
-      return NextResponse.json(
-        { status: "error", message: "Unable to check address access" },
-        { status: 500 }
-      );
-    }
-
-    if (activeBlock) {
-      return blockedResponse();
-    }
-
-    logTiming("block-check");
-
-    const { error: logError } = await supabase
-      .from("public_address_access_logs")
-      .insert({
-        ip_hash: ipHash,
-        username: requestedUsername,
-        user_agent: userAgent,
-      });
-
-    if (logError) {
-      console.error("Public address access log failed", logError);
-      return NextResponse.json(
-        { status: "error", message: "Unable to record address access" },
-        { status: 500 }
-      );
-    }
-
-    logTiming("access-log");
-
-    const recentAccessesQuery = supabase
-      .from("public_address_access_logs")
-      .select("username")
-      .eq("ip_hash", ipHash)
-      .gte("created_at", windowStart.toISOString());
+    const rateLimitQuery = supabase
+      .rpc("check_public_address_rate_limit", {
+        p_ip_hash: ipHash,
+        p_username: requestedUsername,
+        p_user_agent: userAgent,
+        p_now: now.toISOString(),
+        p_window_start: windowStart.toISOString(),
+        p_blocked_until: blockedUntil.toISOString(),
+        p_distinct_limit: DISTINCT_USERNAME_LIMIT,
+      })
+      .returns<RateLimitResult[]>()
+      .single();
 
     const addressQuery = supabase
       .from("profiles")
@@ -192,41 +254,47 @@ export async function GET(
       .single<PublicAddress>();
 
     const [
-      { data: recentAccesses, error: recentAccessesError },
+      { data: rateLimit, error: rateLimitError },
       { data: address, error: addressError },
-    ] = await Promise.all([recentAccessesQuery, addressQuery]);
+    ] = await Promise.all([rateLimitQuery, addressQuery]);
 
-    logTiming("rate-count-and-address");
+    logTiming("rate-limit-and-address");
 
-    if (recentAccessesError) {
-      console.error("Rate limit access count failed", recentAccessesError);
-      return NextResponse.json(
-        { status: "error", message: "Unable to check address access" },
-        { status: 500 }
-      );
-    }
-
-    const distinctUsernames = new Set(
-      recentAccesses?.map((access) => access.username) || []
-    );
-
-    if (distinctUsernames.size >= DISTINCT_USERNAME_LIMIT) {
-      const { error: blockError } = await supabase
-        .from("public_address_blocks")
-        .insert({
-          ip_hash: ipHash,
-          blocked_until: new Date(now.getTime() + BLOCK_DURATION_MS).toISOString(),
-          reason: "Opened 5 different usernames within 5 minutes",
-        });
-
-      if (blockError) {
-        console.error("Rate limit block insert failed", blockError);
+    if (rateLimitError) {
+      if (!isMissingRpcError(rateLimitError)) {
+        console.error("Rate limit check failed", rateLimitError);
         return NextResponse.json(
-          { status: "error", message: "Unable to enforce address access limit" },
+          { status: "error", message: "Unable to check address access" },
           { status: 500 }
         );
       }
 
+      const fallbackRateLimit = await checkRateLimitFallback({
+        supabase,
+        ipHash,
+        username: requestedUsername,
+        userAgent,
+        now,
+        windowStart,
+        blockedUntil,
+      });
+
+      logTiming("rate-limit-fallback");
+
+      if (fallbackRateLimit.error) {
+        console.error("Rate limit fallback failed", fallbackRateLimit.error);
+        return NextResponse.json(
+          { status: "error", message: "Unable to check address access" },
+          { status: 500 }
+        );
+      }
+
+      if (fallbackRateLimit.isBlocked) {
+        return blockedResponse();
+      }
+    }
+
+    if (rateLimit?.is_blocked) {
       return blockedResponse();
     }
 
