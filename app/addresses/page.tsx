@@ -31,6 +31,15 @@ const copy = {
     view: "عرض العنوان",
     edit: "تعديل العنوان",
     logout: "تسجيل الخروج",
+    deleteAccountTitle: "حذف الحساب",
+    deleteAccountBody:
+      "حذف الحساب إجراء نهائي ولا يمكن التراجع عنه. سيتم حذف عناوينك وبيانات الوصول والصور المرتبطة بها.",
+    deleteAccountConfirmLabel: "للتأكيد اكتب: حذف الحساب",
+    deleteAccountPlaceholder: "حذف الحساب",
+    deleteAccountButton: "حذف الحساب نهائيًا",
+    deleteAccountCancel: "إلغاء",
+    deletingAccount: "جاري حذف الحساب...",
+    deleteAccountError: "تعذر حذف الحساب. حاول مرة أخرى.",
   },
   en: {
     authCheckError: "Could not verify your login.",
@@ -47,6 +56,15 @@ const copy = {
     view: "View Address",
     edit: "Edit Address",
     logout: "Log Out",
+    deleteAccountTitle: "Delete account",
+    deleteAccountBody:
+      "Deleting your account is final and cannot be undone. Your addresses, access data, and related photos will be removed.",
+    deleteAccountConfirmLabel: "To confirm, type: DELETE",
+    deleteAccountPlaceholder: "DELETE",
+    deleteAccountButton: "Delete account permanently",
+    deleteAccountCancel: "Cancel",
+    deletingAccount: "Deleting account...",
+    deleteAccountError: "Could not delete your account. Try again.",
   },
 };
 
@@ -58,6 +76,9 @@ export default function AddressesPage() {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -69,6 +90,49 @@ export default function AddressesPage() {
     }
 
     router.push("/");
+  };
+
+  const deleteAccount = async () => {
+    const expectedConfirmation = language === "en" ? "DELETE" : "حذف الحساب";
+
+    if (deleteConfirmation.trim() !== expectedConfirmation || deletingAccount) {
+      return;
+    }
+
+    setDeletingAccount(true);
+    setMessage("");
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      console.log(sessionError);
+      setMessage(text.authCheckError);
+      setDeletingAccount(false);
+      return;
+    }
+
+    const response = await fetch("/api/account/delete", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      console.log(result?.message || response.statusText);
+      setMessage(text.deleteAccountError);
+      setDeletingAccount(false);
+      return;
+    }
+
+    await supabase.auth.signOut();
+    router.push("/account-deleted");
   };
 
   useEffect(() => {
@@ -229,12 +293,75 @@ export default function AddressesPage() {
         )}
 
         {!loading && isLoggedIn && (
-          <button
-            onClick={signOut}
-            className="mt-4 w-full rounded-xl border border-black bg-white py-4 font-bold text-black shadow-sm"
-          >
-            {text.logout}
-          </button>
+          <>
+            <button
+              onClick={signOut}
+              className="mt-4 w-full rounded-xl border border-black bg-white py-4 font-bold text-black shadow-sm"
+            >
+              {text.logout}
+            </button>
+
+            <section className="mt-4 rounded-3xl border border-red-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-2 text-lg font-black text-red-700">
+                {text.deleteAccountTitle}
+              </h2>
+              <p className="mb-4 leading-7 text-gray-700">
+                {text.deleteAccountBody}
+              </p>
+
+              {!deleteConfirmOpen ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmOpen(true);
+                    setDeleteConfirmation("");
+                  }}
+                  className="w-full rounded-xl border border-red-700 py-4 font-bold text-red-700"
+                >
+                  {text.deleteAccountTitle}
+                </button>
+              ) : (
+                <div>
+                  <label className="mb-2 block font-bold text-black">
+                    {text.deleteAccountConfirmLabel}
+                  </label>
+                  <input
+                    value={deleteConfirmation}
+                    onChange={(event) => setDeleteConfirmation(event.target.value)}
+                    className="mb-3 w-full rounded-xl border p-4 text-black"
+                    placeholder={text.deleteAccountPlaceholder}
+                  />
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      onClick={deleteAccount}
+                      disabled={
+                        deletingAccount ||
+                        deleteConfirmation.trim() !==
+                          (language === "en" ? "DELETE" : "حذف الحساب")
+                      }
+                      className="w-full rounded-xl bg-red-700 py-4 font-bold text-white disabled:opacity-50"
+                    >
+                      {deletingAccount
+                        ? text.deletingAccount
+                        : text.deleteAccountButton}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteConfirmOpen(false);
+                        setDeleteConfirmation("");
+                      }}
+                      disabled={deletingAccount}
+                      className="w-full rounded-xl border border-black py-4 font-bold text-black disabled:opacity-50"
+                    >
+                      {text.deleteAccountCancel}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          </>
         )}
       </div>
     </main>

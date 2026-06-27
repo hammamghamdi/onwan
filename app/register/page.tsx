@@ -10,6 +10,7 @@ import {
   normalizeUsername,
   startsWithEnglishLetter,
 } from "@/lib/username";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -188,6 +189,22 @@ export default function RegisterPage() {
         />
 
         <p className="mb-5 text-sm leading-6 text-gray-700">{text.helper}</p>
+
+        <p className="mb-5 text-sm leading-7 text-gray-700">
+          بإنشاء العنوان فإنك توافق على{" "}
+          <Link href="/terms" className="font-bold text-[#006b4f]">
+            الشروط والأحكام
+          </Link>{" "}
+          و{" "}
+          <Link href="/privacy" className="font-bold text-[#006b4f]">
+            سياسة الخصوصية
+          </Link>{" "}
+          و{" "}
+          <Link href="/acceptable-use" className="font-bold text-[#006b4f]">
+            سياسة الاستخدام المقبول
+          </Link>
+          .
+        </p>
 
         <button
           onClick={checkAvailability}

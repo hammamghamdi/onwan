@@ -202,9 +202,9 @@ export default function Home() {
         </section>
 
         <footer className="flex flex-wrap justify-center gap-4 border-t border-[#dfe7e2] py-6 text-sm font-bold text-[#006b4f]">
-          <Link href="/terms">شروط الاستخدام</Link>
+          <Link href="/terms">الشروط والأحكام</Link>
           <Link href="/privacy">سياسة الخصوصية</Link>
-          <Link href="/acceptable-use">الاستخدام المقبول</Link>
+          <Link href="/acceptable-use">سياسة الاستخدام المقبول</Link>
         </footer>
       </div>
     </main>
