@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin();
+  // This bypasses only app-level client cooldown logic. Supabase/provider-level
+  // OTP email rate limits are enforced by Supabase and cannot be bypassed from
+  // the client or this route.
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {

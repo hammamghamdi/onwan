@@ -17,6 +17,8 @@ const copy = {
     authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
     rateLimit:
       "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
+    supabaseEmailRateLimit:
+      "تم تجاوز حد إرسال البريد من Supabase. انتظر قليلًا ثم حاول مرة أخرى.",
     sent: "تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.",
     title: "تسجيل الدخول",
     intro:
@@ -35,6 +37,8 @@ const copy = {
     authErrorPrefix: "Could not send the login link. Supabase message:",
     rateLimit:
       "Too many login links were requested in a short time. Please wait 30 to 60 minutes and try again.",
+    supabaseEmailRateLimit:
+      "Supabase email sending limit was exceeded. Wait a little, then try again.",
     sent: "Login link sent. Check your email.",
     title: "Log In",
     intro:
@@ -46,12 +50,15 @@ const copy = {
   },
 };
 
-type MessageKey = "rateLimit";
+type MessageKey = "rateLimit" | "supabaseEmailRateLimit";
 type SupabaseSession = NonNullable<
   Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
 >;
 
 const MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL = "hammam.ghamdi@gmail.com";
+const isSupabaseEmailRateLimit = (value: string) => {
+  return value.toLowerCase().includes("email rate limit exceeded");
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -286,10 +293,15 @@ export default function LoginPage() {
 
     if (errorMessage) {
       console.log(errorMessage);
-      if (
-        cleanEmail !== MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL &&
-        errorMessage.toLowerCase().includes("email rate limit exceeded")
-      ) {
+      if (isSupabaseEmailRateLimit(errorMessage)) {
+        if (cleanEmail === MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL) {
+          // The admin email skips only our app-level cooldown. Supabase
+          // provider-level OTP email limits cannot be bypassed from the client,
+          // so show a truthful provider-limit message and do not mark success.
+          setMessageKey("supabaseEmailRateLimit");
+          return;
+        }
+
         setMessageKey("rateLimit");
         return;
       }
