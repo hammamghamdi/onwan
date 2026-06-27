@@ -12,6 +12,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    const returnPath = `${window.location.pathname}${window.location.search}`;
+    const loginPath = `/login?next=${encodeURIComponent(returnPath)}`;
 
     const checkAdmin = async () => {
       const headers = await getAdminAuthHeaders();
@@ -19,7 +21,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       if (!isMounted) return;
 
       if (!headers) {
-        router.replace("/login");
+        router.replace(loginPath);
         return;
       }
 
@@ -28,7 +30,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       if (!isMounted) return;
 
       if (response.status === 401) {
-        router.replace("/login");
+        router.replace(loginPath);
         return;
       }
 

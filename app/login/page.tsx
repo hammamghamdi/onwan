@@ -47,6 +47,9 @@ const copy = {
 };
 
 type MessageKey = "rateLimit";
+type SupabaseSession = NonNullable<
+  Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
+>;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,6 +71,29 @@ export default function LoginPage() {
     setMessage("");
     setMessageKey(null);
   };
+
+  const getReturnPath = useCallback(() => {
+    const next =
+      typeof window === "undefined"
+        ? ""
+        : new URLSearchParams(window.location.search).get("next") || "";
+
+    if (!next.startsWith("/") || next.startsWith("//")) {
+      return "/addresses";
+    }
+
+    return next;
+  }, []);
+
+  const getMagicLinkRedirectUrl = useCallback(() => {
+    const returnPath = getReturnPath();
+
+    if (returnPath === "/addresses") {
+      return createAppUrl("/addresses");
+    }
+
+    return createAppUrl(`/login?next=${encodeURIComponent(returnPath)}`);
+  }, [getReturnPath]);
 
   const connectOwnedAddresses = useCallback(
     async (userId: string, userEmail?: string) => {
@@ -97,18 +123,38 @@ export default function LoginPage() {
     [text.claimError, text.noUserEmail]
   );
 
+  const resolvePostLoginPath = useCallback(
+    async (session: SupabaseSession) => {
+      const returnPath = getReturnPath();
+
+      if (!returnPath.startsWith("/admin")) {
+        return "/addresses";
+      }
+
+      const response = await fetch("/api/admin/me", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      return response.ok ? returnPath : "/addresses";
+    },
+    [getReturnPath]
+  );
+
   useEffect(() => {
     let isMounted = true;
 
-    const redirectAuthenticatedUser = async (
-      userId: string,
-      userEmail?: string
-    ) => {
-      await connectOwnedAddresses(userId, userEmail);
+    const redirectAuthenticatedUser = async (session: SupabaseSession) => {
+      await connectOwnedAddresses(session.user.id, session.user.email);
 
       if (!isMounted) return;
 
-      router.replace("/addresses");
+      const redirectPath = await resolvePostLoginPath(session);
+
+      if (!isMounted) return;
+
+      router.replace(redirectPath);
     };
 
     const handleSession = async (
@@ -118,7 +164,7 @@ export default function LoginPage() {
     ) => {
       if (!session?.user) return false;
 
-      await redirectAuthenticatedUser(session.user.id, session.user.email);
+      await redirectAuthenticatedUser(session);
       return true;
     };
 
@@ -172,7 +218,7 @@ export default function LoginPage() {
         session?.user
       ) {
         setAuthChecking(true);
-        redirectAuthenticatedUser(session.user.id, session.user.email);
+        redirectAuthenticatedUser(session);
       }
     });
 
@@ -182,7 +228,7 @@ export default function LoginPage() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [connectOwnedAddresses, router]);
+  }, [connectOwnedAddresses, resolvePostLoginPath, router]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -205,7 +251,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
       options: {
-        emailRedirectTo: createAppUrl("/addresses"),
+        emailRedirectTo: getMagicLinkRedirectUrl(),
       },
     });
 
