@@ -3,6 +3,7 @@
 import { createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
+import { normalizeUsername } from "@/lib/username";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { type KeyboardEvent, useEffect, useState } from "react";
@@ -88,7 +89,7 @@ const copy = {
 
 export default function UserAddressPage() {
   const params = useParams();
-  const user = params.user as string;
+  const user = normalizeUsername(params.user as string);
 
   const [address, setAddress] = useState<AddressData | null>(null);
   const [blockWarning, setBlockWarning] = useState<BlockWarning | null>(null);

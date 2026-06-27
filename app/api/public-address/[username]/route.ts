@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -210,7 +211,7 @@ export async function GET(
   context: PublicAddressRouteContext
 ) {
   const { username } = await context.params;
-  const requestedUsername = username.trim();
+  const requestedUsername = normalizeUsername(username);
   const ipHash = hashIp(getVisitorIp(request));
   const userAgent = request.headers.get("user-agent") || null;
   const includePhotos = request.nextUrl.searchParams.get("photos") === "1";
@@ -230,6 +231,10 @@ export async function GET(
   };
 
   try {
+    if (!isValidUsername(requestedUsername)) {
+      return NextResponse.json({ status: "not_found" }, { status: 404 });
+    }
+
     const supabase = getSupabaseAdmin();
 
     const rateLimitQuery = supabase
@@ -250,7 +255,7 @@ export async function GET(
       .select(
         "id, username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
       )
-      .eq("username", requestedUsername)
+      .ilike("username", requestedUsername)
       .single<PublicAddress>();
 
     const [

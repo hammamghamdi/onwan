@@ -3,6 +3,12 @@
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
+import {
+  hasOnlyUsernameCharacters,
+  isValidUsername,
+  normalizeUsername,
+  startsWithEnglishLetter,
+} from "@/lib/username";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -91,12 +97,9 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [checking, setChecking] = useState(false);
 
-  const cleanUsername = (value: string) => {
-    return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-  };
-
   const checkAvailability = async () => {
-    const name = cleanUsername(username.trim());
+    const typedName = username.trim();
+    const name = normalizeUsername(typedName);
 
     setUsername(name);
     setErrorMessage("");
@@ -107,12 +110,20 @@ export default function RegisterPage() {
       return;
     }
 
+    if (
+      !startsWithEnglishLetter(typedName) ||
+      !hasOnlyUsernameCharacters(typedName)
+    ) {
+      setErrorMessage(text.needsLetter);
+      return;
+    }
+
     if (name.length < 5) {
       setErrorMessage(text.tooShort);
       return;
     }
 
-    if (!/[a-z]/.test(name)) {
+    if (!isValidUsername(name)) {
       setErrorMessage(text.needsLetter);
       return;
     }
@@ -127,8 +138,8 @@ export default function RegisterPage() {
     const { data, error } = await supabase
       .from("profiles")
       .select("username")
-      .eq("username", name)
-      .maybeSingle();
+      .ilike("username", name)
+      .limit(1);
 
     setChecking(false);
 
@@ -138,7 +149,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (data) {
+    if (data && data.length > 0) {
       setIsAvailable(false);
       return;
     }
@@ -166,8 +177,7 @@ export default function RegisterPage() {
           type="text"
           value={username}
           onChange={(event) => {
-            const value = cleanUsername(event.target.value);
-            setUsername(value);
+            setUsername(event.target.value.trim());
             setErrorMessage("");
             setIsAvailable(null);
           }}

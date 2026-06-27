@@ -3,6 +3,7 @@
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
+import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 
@@ -95,7 +96,7 @@ function SetupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const name = searchParams.get("name") || "";
+  const name = normalizeUsername(searchParams.get("name") || "");
 
   const [city, setCity] = useState("");
   const [email, setEmail] = useState("");
@@ -297,7 +298,7 @@ function SetupContent() {
   const saveAddress = async () => {
     const cleanedMapUrl = extractUrl(mapUrl);
 
-    if (!name) {
+    if (!name || !isValidUsername(name)) {
       setMessage(text.missingName);
       return;
     }
@@ -341,6 +342,24 @@ function SetupContent() {
     setMessage("");
 
     try {
+      const { data: existingProfile, error: duplicateCheckError } =
+        await supabase
+          .from("profiles")
+          .select("username")
+          .ilike("username", name)
+          .limit(1);
+
+      if (duplicateCheckError) {
+        console.log(duplicateCheckError);
+        setMessage(text.saveError);
+        return;
+      }
+
+      if (existingProfile && existingProfile.length > 0) {
+        setMessage(text.duplicateName);
+        return;
+      }
+
       const uploadedPhotos = await uploadPhotos();
       const photoUrls = uploadedPhotos.map((photo) => photo.publicUrl);
       const photoStoragePaths = uploadedPhotos.map((photo) => photo.storagePath);

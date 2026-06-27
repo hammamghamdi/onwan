@@ -4,6 +4,7 @@ import { LanguageNav } from "@/app/components/LanguageNav";
 import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { useLanguage } from "@/lib/useLanguage";
+import { normalizeUsername } from "@/lib/username";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
@@ -37,7 +38,7 @@ function SuccessContent() {
   const text = copy[language];
   const searchParams = useSearchParams();
 
-  const name = searchParams.get("name") || "";
+  const name = normalizeUsername(searchParams.get("name") || "");
   const ownerToken = searchParams.get("token") || "";
 
   useEffect(() => {

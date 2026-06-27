@@ -10,5 +10,7 @@ const shareMessageLines = [
 export const createAddressShareMessage = (publicUrl: string) => {
   const displayUrl = createDisplayUrl(publicUrl);
 
-  return shareMessageLines.map((line) => `${line}: ${displayUrl}`).join("\n");
+  return [...shareMessageLines.map((line) => `${line}:`), "", displayUrl].join(
+    "\n"
+  );
 };

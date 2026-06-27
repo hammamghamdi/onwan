@@ -5,6 +5,7 @@ import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
+import { normalizeUsername } from "@/lib/username";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
@@ -115,7 +116,7 @@ function ManageContent() {
   const text = copy[language];
   const searchParams = useSearchParams();
 
-  const name = searchParams.get("name") || "";
+  const name = normalizeUsername(searchParams.get("name") || "");
   const tokenFromUrl = searchParams.get("token") || "";
 
   const [ownerToken, setOwnerToken] = useState("");
