@@ -21,6 +21,7 @@ type AddressData = {
   instructions_en: string | null;
   instructions_ur: string | null;
   instructions_bn: string | null;
+  is_suspended?: boolean;
 };
 
 type AddressPhoto = {
@@ -75,6 +76,7 @@ const copy = {
     reportSubmitting: "جاري الإرسال...",
     reportSuccess: "تم استلام البلاغ. شكرًا لك.",
     reportError: "تعذر إرسال البلاغ. حاول مرة أخرى.",
+    suspended: "هذا العنوان غير متاح حاليًا.",
   },
   en: {
     home: "Home",
@@ -99,6 +101,7 @@ const copy = {
     reportSubmitting: "Submitting...",
     reportSuccess: "Report received. Thank you.",
     reportError: "Could not submit the report. Try again.",
+    suspended: "This address is currently unavailable.",
   },
 };
 
@@ -321,6 +324,16 @@ export default function UserAddressPage() {
             <p className="text-black">{text.notFoundBody}</p>
           </div>
         </div>
+      </main>
+    );
+  }
+
+  if (address.is_suspended) {
+    return (
+      <main dir="rtl" className="grid min-h-screen place-items-center bg-[#f7f8f5] px-4 text-black">
+        <p className="text-center text-xl font-bold">
+          هذا العنوان غير متاح حاليًا.
+        </p>
       </main>
     );
   }

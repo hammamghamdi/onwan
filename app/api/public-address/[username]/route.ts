@@ -35,6 +35,9 @@ type PublicAddress = {
   instructions_en: string | null;
   instructions_ur: string | null;
   instructions_bn: string | null;
+  is_suspended: boolean | null;
+  suspended_reason: string | null;
+  suspended_at: string | null;
 };
 
 type PublicAddressPhoto = {
@@ -254,7 +257,7 @@ export async function GET(
     const addressQuery = supabase
       .from("profiles")
       .select(
-        "id, username, display_username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
+        "id, username, display_username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn, is_suspended, suspended_reason, suspended_at"
       )
       .ilike("username", requestedUsername)
       .single<PublicAddress>();
@@ -306,6 +309,27 @@ export async function GET(
 
     if (addressError || !address) {
       return NextResponse.json({ status: "not_found" }, { status: 404 });
+    }
+
+    if (address.is_suspended) {
+      return NextResponse.json({
+        status: "ok",
+        address: {
+          username: address.username,
+          display_username: address.display_username || address.username,
+          city: null,
+          map_url: null,
+          photo1: null,
+          photo2: null,
+          photo3: null,
+          photos: [],
+          instructions_ar: null,
+          instructions_en: null,
+          instructions_ur: null,
+          instructions_bn: null,
+          is_suspended: true,
+        },
+      });
     }
 
     const legacyPhotos: PublicAddressPhoto[] = [
@@ -374,6 +398,7 @@ export async function GET(
       instructions_en: address.instructions_en,
       instructions_ur: address.instructions_ur,
       instructions_bn: address.instructions_bn,
+      is_suspended: false,
     };
 
     return NextResponse.json({
