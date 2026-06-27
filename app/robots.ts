@@ -4,17 +4,18 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: [
-        "/",
-        "/login",
-        "/register",
-        "/setup",
-        "/success",
+      allow: "/",
+      disallow: [
+        "/api/",
+        "/admin/",
         "/manage",
+        "/success",
+        "/setup",
         "/addresses",
         "/insights",
+        "/login",
       ],
-      disallow: ["/api/", "/*"],
     },
+    sitemap: "https://onwans.com/sitemap.xml",
   };
 }

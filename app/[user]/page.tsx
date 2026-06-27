@@ -68,6 +68,13 @@ const copy = {
     close: "إغلاق",
     instructions: "تعليمات الوصول",
     noInstructions: "لم يتم إدخال تعليمات الوصول",
+    report: "الإبلاغ عن إساءة استخدام",
+    reportDetails: "تفاصيل البلاغ",
+    reportPlaceholder: "اكتب سبب البلاغ باختصار",
+    reportSubmit: "إرسال البلاغ",
+    reportSubmitting: "جاري الإرسال...",
+    reportSuccess: "تم استلام البلاغ. شكرًا لك.",
+    reportError: "تعذر إرسال البلاغ. حاول مرة أخرى.",
   },
   en: {
     home: "Home",
@@ -85,6 +92,13 @@ const copy = {
     close: "Close",
     instructions: "Access instructions",
     noInstructions: "No access instructions entered",
+    report: "Report misuse",
+    reportDetails: "Report details",
+    reportPlaceholder: "Briefly describe the issue",
+    reportSubmit: "Submit report",
+    reportSubmitting: "Submitting...",
+    reportSuccess: "Report received. Thank you.",
+    reportError: "Could not submit the report. Try again.",
   },
 };
 
@@ -99,6 +113,10 @@ export default function UserAddressPage() {
   const [language, setLanguage] = useState<PublicLanguage>("ar");
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<number | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportMessage, setReportMessage] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -196,6 +214,35 @@ export default function UserAddressPage() {
     )}`;
 
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const submitReport = async () => {
+    if (!address || reportSubmitting) return;
+
+    setReportSubmitting(true);
+    setReportMessage("");
+
+    const reportedUrl = createPublicAddressUrl(
+      address.display_username || address.username
+    );
+
+    const { error } = await supabase.from("abuse_reports").insert({
+      reported_username: address.username,
+      reported_url: reportedUrl,
+      reason: "abuse",
+      details: reportDetails.trim() || null,
+    });
+
+    setReportSubmitting(false);
+
+    if (error) {
+      console.log(error);
+      setReportMessage(text.reportError);
+      return;
+    }
+
+    setReportDetails("");
+    setReportMessage(text.reportSuccess);
   };
 
   const header = (
@@ -427,8 +474,52 @@ export default function UserAddressPage() {
             {address.instructions_bn &&
               address.instructions_bn !== address.instructions_ar && (
                 <p dir="ltr">{address.instructions_bn}</p>
-              )}
+            )}
           </div>
+        </section>
+
+        <section className="pb-5 text-center text-sm">
+          {!reportOpen && !reportMessage && (
+            <button
+              type="button"
+              onClick={() => setReportOpen(true)}
+              className="font-bold text-gray-500 underline underline-offset-4"
+            >
+              {text.report}
+            </button>
+          )}
+
+          {reportOpen && (
+            <div className="rounded-2xl bg-white p-4 text-right shadow-sm">
+              <label className="mb-2 block font-bold text-black">
+                {text.reportDetails}
+              </label>
+              <textarea
+                value={reportDetails}
+                onChange={(event) => {
+                  setReportDetails(event.target.value);
+                  setReportMessage("");
+                }}
+                rows={3}
+                className="mb-3 w-full rounded-xl border p-3 text-black"
+                placeholder={text.reportPlaceholder}
+              />
+              <button
+                type="button"
+                onClick={submitReport}
+                disabled={reportSubmitting}
+                className="w-full rounded-xl bg-[#006b4f] py-3 font-bold text-white disabled:opacity-60"
+              >
+                {reportSubmitting ? text.reportSubmitting : text.reportSubmit}
+              </button>
+            </div>
+          )}
+
+          {reportMessage && (
+            <p className="mt-3 rounded-xl bg-white p-3 font-bold text-[#006b4f] shadow-sm">
+              {reportMessage}
+            </p>
+          )}
         </section>
       </div>
 
