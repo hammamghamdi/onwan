@@ -12,6 +12,7 @@ import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 
 type ManageProfile = {
   username: string;
+  display_username: string | null;
   city: string | null;
   map_url: string | null;
   instructions_ar: string | null;
@@ -120,6 +121,8 @@ function ManageContent() {
   const tokenFromUrl = searchParams.get("token") || "";
 
   const [ownerToken, setOwnerToken] = useState("");
+  const [displayName, setDisplayName] = useState(name);
+  const [profileUsername, setProfileUsername] = useState(name);
   const [city, setCity] = useState("");
   const [mapUrl, setMapUrl] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -139,7 +142,7 @@ function ManageContent() {
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const blobPreviewUrls = useRef<string[]>([]);
 
-  const addressUrl = createPublicAddressUrl(name);
+  const addressUrl = createPublicAddressUrl(displayName || name);
   const displayAddressUrl = createDisplayUrl(addressUrl);
 
   const extractUrl = (value: string) => {
@@ -339,8 +342,10 @@ function ManageContent() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, city, map_url, instructions_ar, photo1, photo2, photo3")
-        .eq("username", name)
+        .select(
+          "username, display_username, city, map_url, instructions_ar, photo1, photo2, photo3"
+        )
+        .ilike("username", name)
         .eq("owner_token", resolvedToken)
         .maybeSingle<ManageProfile>();
 
@@ -352,6 +357,8 @@ function ManageContent() {
       }
 
       localStorage.setItem(`onwan_owner_${name}`, resolvedToken);
+      setDisplayName(data.display_username || data.username);
+      setProfileUsername(data.username);
       setCity(data.city || "");
       setMapUrl(data.map_url || "");
       setInstructions(data.instructions_ar || "");
@@ -367,7 +374,13 @@ function ManageContent() {
     };
 
     loadProfile();
-  }, [name, tokenFromUrl, text.invalidAccess, text.missingName, text.missingToken]);
+  }, [
+    name,
+    tokenFromUrl,
+    text.invalidAccess,
+    text.missingName,
+    text.missingToken,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -448,7 +461,7 @@ function ManageContent() {
           photo2: nextPhotoUrls[1] || null,
           photo3: nextPhotoUrls[2] || null,
         })
-        .eq("username", name)
+        .eq("username", profileUsername)
         .eq("owner_token", ownerToken);
 
       if (error) {
@@ -460,7 +473,7 @@ function ManageContent() {
       const { error: photosError } = await supabase.rpc(
         "replace_profile_address_photos",
         {
-          p_username: name,
+          p_username: profileUsername,
           p_owner_token: ownerToken,
           p_storage_paths: nextPhotoStoragePaths.filter(Boolean),
         }
@@ -563,7 +576,7 @@ function ManageContent() {
             <div className="mb-4 rounded-2xl bg-[#eef5f1] p-3 text-sm leading-6 text-[#1f2d2b]">
               <p className="mb-1 font-bold">{text.landscapePhotoNote}</p>
               <a
-                href="/abdullah"
+                href="/Abdullah"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold text-[#006b4f] underline underline-offset-4"
@@ -653,7 +666,7 @@ function ManageContent() {
             </button>
 
             <Link
-              href={`/${name}`}
+              href={`/${displayName || name}`}
               className="mb-3 block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
             >
               {text.view}

@@ -25,6 +25,7 @@ type PublicAddressRouteContext = {
 type PublicAddress = {
   id: string;
   username: string;
+  display_username: string | null;
   city: string | null;
   map_url: string | null;
   photo1: string | null;
@@ -253,7 +254,7 @@ export async function GET(
     const addressQuery = supabase
       .from("profiles")
       .select(
-        "id, username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
+        "id, username, display_username, city, map_url, photo1, photo2, photo3, instructions_ar, instructions_en, instructions_ur, instructions_bn"
       )
       .ilike("username", requestedUsername)
       .single<PublicAddress>();
@@ -363,6 +364,7 @@ export async function GET(
 
     const publicAddress = {
       username: address.username,
+      display_username: address.display_username || address.username,
       city: address.city,
       map_url: address.map_url,
       photo1: address.photo1,

@@ -4,7 +4,7 @@ import { LanguageNav } from "@/app/components/LanguageNav";
 import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { useLanguage } from "@/lib/useLanguage";
-import { normalizeUsername } from "@/lib/username";
+import { getDisplayUsername, normalizeUsername } from "@/lib/username";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
@@ -39,6 +39,9 @@ function SuccessContent() {
   const searchParams = useSearchParams();
 
   const name = normalizeUsername(searchParams.get("name") || "");
+  const displayName = getDisplayUsername(
+    searchParams.get("displayName") || name
+  );
   const ownerToken = searchParams.get("token") || "";
 
   useEffect(() => {
@@ -51,7 +54,7 @@ function SuccessContent() {
   const [qrReady, setQrReady] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const addressUrl = createPublicAddressUrl(name);
+  const addressUrl = createPublicAddressUrl(displayName || name);
   const displayAddressUrl = createDisplayUrl(addressUrl);
 
   useEffect(() => {
@@ -137,14 +140,14 @@ function SuccessContent() {
         </a>
 
         <Link
-          href={`/${name}`}
+          href={`/${displayName || name}`}
           className="mb-4 block w-full rounded-xl border border-black py-4 font-bold text-black"
         >
           {text.view}
         </Link>
 
         <Link
-          href={`/manage?name=${name}&token=${ownerToken}`}
+          href={`/manage?name=${displayName || name}&token=${ownerToken}`}
           className="block w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f]"
         >
           {text.edit}

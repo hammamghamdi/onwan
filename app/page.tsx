@@ -147,7 +147,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/abdullah"
+              href="/Abdullah"
               className="rounded-full border border-[#006b4f] bg-[#eef5f1] px-8 py-4 font-bold text-[#006b4f]"
             >
               {text.exampleCta}

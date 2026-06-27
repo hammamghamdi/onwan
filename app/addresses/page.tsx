@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 type AddressProfile = {
   username: string;
+  display_username: string | null;
   city: string | null;
   owner_token: string | null;
 };
@@ -115,7 +116,7 @@ export default function AddressesPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, city, owner_token")
+        .select("username, display_username, city, owner_token")
         .eq("user_id", user.id)
         .order("username", { ascending: true });
 
@@ -186,7 +187,9 @@ export default function AddressesPage() {
         {!loading && isLoggedIn && addresses.length > 0 && (
           <div className="space-y-3">
             {addresses.map((address) => {
-              const publicUrl = createPublicAddressUrl(address.username);
+              const displayUsername =
+                address.display_username || address.username;
+              const publicUrl = createPublicAddressUrl(displayUsername);
               const displayPublicUrl = createDisplayUrl(publicUrl);
 
               return (
@@ -195,7 +198,7 @@ export default function AddressesPage() {
                   className="rounded-3xl bg-white p-5 shadow-sm"
                 >
                   <h2 className="mb-2 text-xl font-bold text-black">
-                    {address.username}
+                    {displayUsername}
                   </h2>
                   <p className="mb-3 text-gray-700">
                     {address.city || text.noCity}
@@ -205,7 +208,7 @@ export default function AddressesPage() {
                   </p>
 
                   <Link
-                    href={`/${address.username}`}
+                    href={`/${displayUsername}`}
                     className="mb-3 block w-full rounded-xl bg-[#006b4f] py-4 text-center font-bold text-white"
                   >
                     {text.view}
@@ -213,7 +216,7 @@ export default function AddressesPage() {
 
                   {address.owner_token && (
                     <Link
-                      href={`/manage?name=${address.username}&token=${address.owner_token}`}
+                      href={`/manage?name=${displayUsername}&token=${address.owner_token}`}
                       className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
                     >
                       {text.edit}

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import {
   hasOnlyUsernameCharacters,
+  getDisplayUsername,
   isValidUsername,
   normalizeUsername,
   startsWithEnglishLetter,
@@ -73,15 +74,15 @@ const copy = {
   },
   en: {
     missingName: "Enter an address name first.",
-    tooShort: "Address name must be at least 5 characters.",
+    tooShort: "",
     needsLetter: "Address name must include at least one English letter.",
     reserved: "This name is not available for use.",
     checkError: "An error occurred while checking. Try again.",
     title: "Choose your address name",
     usernameLabel: "Address name",
-    usernamePlaceholder: "Example: abdullah",
+    usernamePlaceholder: "Example: Abdullah",
     helper:
-      "Choose an easy name you can share with others. English letters and numbers only, minimum 5 characters.",
+      "Choose an easy name you can share with others. English letters and numbers only.",
     checking: "Checking...",
     check: "Reserve your address now",
     unavailable: "This address is already taken",
@@ -99,6 +100,7 @@ export default function RegisterPage() {
 
   const checkAvailability = async () => {
     const typedName = username.trim();
+    const displayName = getDisplayUsername(typedName);
     const name = normalizeUsername(typedName);
 
     setUsername(name);
@@ -115,11 +117,6 @@ export default function RegisterPage() {
       !hasOnlyUsernameCharacters(typedName)
     ) {
       setErrorMessage(text.needsLetter);
-      return;
-    }
-
-    if (name.length < 5) {
-      setErrorMessage(text.tooShort);
       return;
     }
 
@@ -154,7 +151,12 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push(`/setup?name=${name}`);
+    const setupParams = new URLSearchParams({
+      name,
+      displayName,
+    });
+
+    router.push(`/setup?${setupParams.toString()}`);
   };
 
   return (

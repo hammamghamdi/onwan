@@ -10,6 +10,7 @@ import { type KeyboardEvent, useEffect, useState } from "react";
 
 type AddressData = {
   username: string;
+  display_username: string | null;
   city: string | null;
   map_url: string | null;
   photo1: string | null;
@@ -62,7 +63,7 @@ const copy = {
     noCity: "لم يتم إدخال المدينة",
     map: "الخريطة",
     photos: "صور الوصول",
-    enlargeHint: "انقر هنا لتكبير الصورة",
+    enlargeHint: "انقر على الصورة لتكبيرها",
     photoAlt: "صورة الوصول",
     close: "إغلاق",
     instructions: "تعليمات الوصول",
@@ -187,7 +188,9 @@ export default function UserAddressPage() {
   const pageDirection = language === "en" ? "ltr" : "rtl";
 
   const shareOnWhatsApp = () => {
-    const publicUrl = createPublicAddressUrl(user);
+    const publicUrl = createPublicAddressUrl(
+      address?.display_username || address?.username || user
+    );
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
       createAddressShareMessage(publicUrl)
     )}`;
@@ -339,7 +342,7 @@ export default function UserAddressPage() {
 
         <section className="mb-3 rounded-3xl bg-white p-4 shadow-sm">
           <h1 className="mb-3 text-center text-2xl font-bold text-black">
-            {address.username}
+            {address.display_username || address.username}
           </h1>
 
           <div className="flex items-center gap-2">

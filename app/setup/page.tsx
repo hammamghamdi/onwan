@@ -3,7 +3,11 @@
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
-import { isValidUsername, normalizeUsername } from "@/lib/username";
+import {
+  getDisplayUsername,
+  isValidUsername,
+  normalizeUsername,
+} from "@/lib/username";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, Suspense, useEffect, useRef, useState } from "react";
 
@@ -97,6 +101,9 @@ function SetupContent() {
   const router = useRouter();
 
   const name = normalizeUsername(searchParams.get("name") || "");
+  const displayName = getDisplayUsername(
+    searchParams.get("displayName") || name
+  );
 
   const [city, setCity] = useState("");
   const [email, setEmail] = useState("");
@@ -298,7 +305,12 @@ function SetupContent() {
   const saveAddress = async () => {
     const cleanedMapUrl = extractUrl(mapUrl);
 
-    if (!name || !isValidUsername(name)) {
+    if (
+      !name ||
+      !displayName ||
+      !isValidUsername(name) ||
+      !isValidUsername(displayName)
+    ) {
       setMessage(text.missingName);
       return;
     }
@@ -367,6 +379,7 @@ function SetupContent() {
 
       const { error } = await supabase.from("profiles").insert({
         username: name,
+        display_username: displayName,
         owner_token: ownerToken,
         email: email.trim().toLowerCase(),
         city: city.trim(),
@@ -406,7 +419,13 @@ function SetupContent() {
         console.log(photosError);
       }
 
-      router.push(`/success?name=${name}&token=${ownerToken}`);
+      const successParams = new URLSearchParams({
+        name,
+        displayName,
+        token: ownerToken,
+      });
+
+      router.push(`/success?${successParams.toString()}`);
     } catch (error) {
       console.log(error);
       setMessage(
@@ -434,7 +453,7 @@ function SetupContent() {
             {text.addressLabel}
           </p>
           <p dir="ltr" className="text-lg font-bold text-black">
-            {name}
+            {displayName || name}
           </p>
         </div>
 
