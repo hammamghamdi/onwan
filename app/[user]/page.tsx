@@ -1,5 +1,6 @@
 "use client";
 
+import { createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -185,7 +186,7 @@ export default function UserAddressPage() {
   const pageDirection = language === "en" ? "ltr" : "rtl";
 
   const shareOnWhatsApp = () => {
-    const publicUrl = `${window.location.origin}/${user}`;
+    const publicUrl = createPublicAddressUrl(user);
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
       createAddressShareMessage(publicUrl)
     )}`;

@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createPublicAddressUrl } from "@/lib/appUrl";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
@@ -56,12 +57,6 @@ export default function AddressesPage() {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
-
-  const getPublicUrl = (username: string) => {
-    return typeof window !== "undefined"
-      ? `${window.location.origin}/${username}`
-      : `/${username}`;
-  };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -191,7 +186,7 @@ export default function AddressesPage() {
         {!loading && isLoggedIn && addresses.length > 0 && (
           <div className="space-y-3">
             {addresses.map((address) => {
-              const publicUrl = getPublicUrl(address.username);
+              const publicUrl = createPublicAddressUrl(address.username);
 
               return (
                 <section

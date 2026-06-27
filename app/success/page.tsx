@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
@@ -49,10 +50,7 @@ function SuccessContent() {
   const [qrReady, setQrReady] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const addressUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/${name}`
-      : `/${name}`;
+  const addressUrl = createPublicAddressUrl(name);
 
   useEffect(() => {
     if (!qrCanvasRef.current || !addressUrl || !name) return;

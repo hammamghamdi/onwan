@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createAppUrl } from "@/lib/appUrl";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import { useRouter } from "next/navigation";
@@ -204,10 +205,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
       options: {
-        emailRedirectTo:
-          typeof window !== "undefined"
-            ? `${window.location.origin}/addresses`
-            : undefined,
+        emailRedirectTo: createAppUrl("/addresses"),
       },
     });
 

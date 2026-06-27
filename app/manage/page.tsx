@@ -1,6 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
+import { createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
@@ -137,10 +138,7 @@ function ManageContent() {
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const blobPreviewUrls = useRef<string[]>([]);
 
-  const addressUrl =
-    typeof window !== "undefined" && name
-      ? `${window.location.origin}/${name}`
-      : `/${name}`;
+  const addressUrl = createPublicAddressUrl(name);
 
   const extractUrl = (value: string) => {
     return value.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
@@ -510,7 +508,7 @@ function ManageContent() {
             {text.addressLabel}
           </p>
           <p dir="ltr" className="break-all text-lg font-bold text-black">
-            {name ? `onwan.sa/${name}` : text.unnamed}
+            {name ? addressUrl : text.unnamed}
           </p>
         </div>
 
