@@ -1,7 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
-import { createPublicAddressUrl } from "@/lib/appUrl";
+import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
@@ -51,6 +51,7 @@ function SuccessContent() {
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const addressUrl = createPublicAddressUrl(name);
+  const displayAddressUrl = createDisplayUrl(addressUrl);
 
   useEffect(() => {
     if (!qrCanvasRef.current || !addressUrl || !name) return;
@@ -99,7 +100,7 @@ function SuccessContent() {
         <h1 className="mb-6 text-3xl font-bold text-black">{text.title}</h1>
 
         <div className="mb-6 break-all rounded-2xl bg-gray-100 p-4 text-lg font-bold text-black">
-          {addressUrl}
+          {displayAddressUrl}
         </div>
 
         <div className="mb-4 rounded-2xl bg-gray-100 p-4">

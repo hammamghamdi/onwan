@@ -1,7 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
-import { createPublicAddressUrl } from "@/lib/appUrl";
+import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import Link from "next/link";
@@ -187,6 +187,7 @@ export default function AddressesPage() {
           <div className="space-y-3">
             {addresses.map((address) => {
               const publicUrl = createPublicAddressUrl(address.username);
+              const displayPublicUrl = createDisplayUrl(publicUrl);
 
               return (
                 <section
@@ -200,7 +201,7 @@ export default function AddressesPage() {
                     {address.city || text.noCity}
                   </p>
                   <p dir="ltr" className="mb-4 break-all text-sm text-gray-600">
-                    {publicUrl}
+                    {displayPublicUrl}
                   </p>
 
                   <Link

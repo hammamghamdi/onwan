@@ -1,3 +1,5 @@
+import { createDisplayUrl } from "@/lib/appUrl";
+
 const shareMessageLines = [
   "هذا عنوان الوصول الخاص بي",
   "This is my access address",
@@ -6,5 +8,7 @@ const shareMessageLines = [
 ];
 
 export const createAddressShareMessage = (publicUrl: string) => {
-  return [...shareMessageLines, "", publicUrl].join("\n");
+  const displayUrl = createDisplayUrl(publicUrl);
+
+  return shareMessageLines.map((line) => `${line}: ${displayUrl}`).join("\n");
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { LanguageNav } from "@/app/components/LanguageNav";
-import { createPublicAddressUrl } from "@/lib/appUrl";
+import { createDisplayUrl, createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
@@ -139,6 +139,7 @@ function ManageContent() {
   const blobPreviewUrls = useRef<string[]>([]);
 
   const addressUrl = createPublicAddressUrl(name);
+  const displayAddressUrl = createDisplayUrl(addressUrl);
 
   const extractUrl = (value: string) => {
     return value.match(/https?:\/\/\S+/)?.[0]?.trim() || "";
@@ -508,7 +509,7 @@ function ManageContent() {
             {text.addressLabel}
           </p>
           <p dir="ltr" className="break-all text-lg font-bold text-black">
-            {name ? addressUrl : text.unnamed}
+            {name ? displayAddressUrl : text.unnamed}
           </p>
         </div>
 

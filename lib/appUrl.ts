@@ -28,3 +28,7 @@ export const createAppUrl = (path = "/") => {
 export const createPublicAddressUrl = (username: string) => {
   return createAppUrl(`/${encodeURIComponent(username)}`);
 };
+
+export const createDisplayUrl = (url: string) => {
+  return url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+};
