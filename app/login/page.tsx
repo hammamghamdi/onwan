@@ -51,6 +51,8 @@ type SupabaseSession = NonNullable<
   Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
 >;
 
+const MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL = "hammam.ghamdi@gmail.com";
+
 export default function LoginPage() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
@@ -248,23 +250,51 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: getMagicLinkRedirectUrl(),
-      },
-    });
+    const redirectTo = getMagicLinkRedirectUrl();
+    let errorMessage = "";
+
+    if (cleanEmail === MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL) {
+      const response = await fetch("/api/auth/admin-login-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: cleanEmail,
+          redirectTo,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        errorMessage = result?.message || "Unable to send login link.";
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      errorMessage = error?.message || "";
+    }
 
     setLoading(false);
 
-    if (error) {
-      console.log(error);
-      if (error.message.toLowerCase().includes("email rate limit exceeded")) {
+    if (errorMessage) {
+      console.log(errorMessage);
+      if (
+        cleanEmail !== MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL &&
+        errorMessage.toLowerCase().includes("email rate limit exceeded")
+      ) {
         setMessageKey("rateLimit");
         return;
       }
 
-      setMessage(`${text.authErrorPrefix} ${error.message}`);
+      setMessage(`${text.authErrorPrefix} ${errorMessage}`);
       return;
     }
 
