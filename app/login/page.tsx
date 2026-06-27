@@ -17,8 +17,6 @@ const copy = {
     authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
     rateLimit:
       "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
-    supabaseEmailRateLimit:
-      "تم تجاوز حد إرسال البريد من Supabase. انتظر قليلًا ثم حاول مرة أخرى.",
     sent: "تم إرسال رابط الدخول. تحقق من بريدك الإلكتروني.",
     title: "تسجيل الدخول",
     intro:
@@ -37,8 +35,6 @@ const copy = {
     authErrorPrefix: "Could not send the login link. Supabase message:",
     rateLimit:
       "Too many login links were requested in a short time. Please wait 30 to 60 minutes and try again.",
-    supabaseEmailRateLimit:
-      "Supabase email sending limit was exceeded. Wait a little, then try again.",
     sent: "Login link sent. Check your email.",
     title: "Log In",
     intro:
@@ -50,12 +46,11 @@ const copy = {
   },
 };
 
-type MessageKey = "rateLimit" | "supabaseEmailRateLimit";
+type MessageKey = "rateLimit";
 type SupabaseSession = NonNullable<
   Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
 >;
 
-const MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL = "hammam.ghamdi@gmail.com";
 const isSupabaseEmailRateLimit = (value: string) => {
   return value.toLowerCase().includes("email rate limit exceeded");
 };
@@ -81,28 +76,9 @@ export default function LoginPage() {
     setMessageKey(null);
   };
 
-  const getReturnPath = useCallback(() => {
-    const next =
-      typeof window === "undefined"
-        ? ""
-        : new URLSearchParams(window.location.search).get("next") || "";
-
-    if (!next.startsWith("/") || next.startsWith("//")) {
-      return "/addresses";
-    }
-
-    return next;
-  }, []);
-
   const getMagicLinkRedirectUrl = useCallback(() => {
-    const returnPath = getReturnPath();
-
-    if (returnPath === "/addresses") {
-      return createAppUrl("/addresses");
-    }
-
-    return createAppUrl(`/login?next=${encodeURIComponent(returnPath)}`);
-  }, [getReturnPath]);
+    return createAppUrl("/addresses");
+  }, []);
 
   const connectOwnedAddresses = useCallback(
     async (userId: string, userEmail?: string) => {
@@ -132,25 +108,6 @@ export default function LoginPage() {
     [text.claimError, text.noUserEmail]
   );
 
-  const resolvePostLoginPath = useCallback(
-    async (session: SupabaseSession) => {
-      const returnPath = getReturnPath();
-
-      if (!returnPath.startsWith("/admin")) {
-        return "/addresses";
-      }
-
-      const response = await fetch("/api/admin/me", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      return response.ok ? returnPath : "/addresses";
-    },
-    [getReturnPath]
-  );
-
   useEffect(() => {
     let isMounted = true;
 
@@ -159,11 +116,7 @@ export default function LoginPage() {
 
       if (!isMounted) return;
 
-      const redirectPath = await resolvePostLoginPath(session);
-
-      if (!isMounted) return;
-
-      router.replace(redirectPath);
+      router.replace("/addresses");
     };
 
     const handleSession = async (
@@ -237,7 +190,7 @@ export default function LoginPage() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [connectOwnedAddresses, resolvePostLoginPath, router]);
+  }, [connectOwnedAddresses, router]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -257,51 +210,19 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const redirectTo = getMagicLinkRedirectUrl();
-    let errorMessage = "";
-
-    if (cleanEmail === MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL) {
-      const response = await fetch("/api/auth/admin-login-link", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: cleanEmail,
-          redirectTo,
-        }),
-      });
-
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as {
-          message?: string;
-        } | null;
-        errorMessage = result?.message || "Unable to send login link.";
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: cleanEmail,
-        options: {
-          emailRedirectTo: redirectTo,
-        },
-      });
-
-      errorMessage = error?.message || "";
-    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        emailRedirectTo: getMagicLinkRedirectUrl(),
+      },
+    });
+    const errorMessage = error?.message || "";
 
     setLoading(false);
 
     if (errorMessage) {
       console.log(errorMessage);
       if (isSupabaseEmailRateLimit(errorMessage)) {
-        if (cleanEmail === MAGIC_LINK_COOLDOWN_EXEMPT_EMAIL) {
-          // The admin email skips only our app-level cooldown. Supabase
-          // provider-level OTP email limits cannot be bypassed from the client,
-          // so show a truthful provider-limit message and do not mark success.
-          setMessageKey("supabaseEmailRateLimit");
-          return;
-        }
-
         setMessageKey("rateLimit");
         return;
       }
