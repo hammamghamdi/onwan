@@ -76,6 +76,19 @@ npm run lint
 - `NEXT_PUBLIC_*` variables are intentionally available to browser code.
 - Ensure the Supabase Storage bucket used for address photos exists and matches the code expectation.
 
+## CI/CD Guardrails
+
+GitHub Actions runs on pull requests and on pushes to `main`.
+
+The CI workflow installs dependencies with `npm ci` and runs:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run security:csrf`
+- `npm run build`
+
+The workflow uses safe placeholder values for build-time environment variables. Real production secrets must stay in Vercel or GitHub secrets and must never be committed to the repository or printed in CI logs.
+
 ## Supabase Migration Notes
 
 Apply migrations in timestamp order from `supabase/migrations`.
