@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Onwan
 
-## Getting Started
+Onwan is an Arabic-first public address sharing app. Users reserve a short public address name, add a map link, photos, and arrival instructions, then share a stable URL such as:
 
-First, run the development server:
+```text
+https://onwans.com/{username}
+```
+
+The app includes public address pages, QR/share flows, owner-token management, Supabase Magic Link login for normal users, account deletion, abuse reporting, address suspension, public policy pages, and a protected admin panel.
+
+## Tech Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- Supabase Postgres
+- Supabase Auth
+- Supabase Storage
+- Custom admin password login with a signed HTTP-only cookie
+
+## Required Environment Variables
+
+Set these in the deployment environment. Do not commit values to the repository.
+
+```text
+NEXT_PUBLIC_APP_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+ADMIN_USERNAME
+ADMIN_PASSWORD_HASH
+ADMIN_SESSION_SECRET
+RATE_LIMIT_HASH_SECRET
+```
+
+Backward-compatible admin identifier fallbacks supported by the code:
+
+```text
+ADMIN_EMAILS
+ADMIN_EMAIL
+```
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build for production:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Lint:
 
-## Learn More
+```bash
+npm run lint
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- The canonical production domain is `https://onwans.com`.
+- Set `NEXT_PUBLIC_APP_URL` to the canonical production origin.
+- Configure all server-only secrets in the hosting provider dashboard.
+- Do not expose `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, or `RATE_LIMIT_HASH_SECRET` to client-side code.
+- `NEXT_PUBLIC_*` variables are intentionally available to browser code.
+- Ensure the Supabase Storage bucket used for address photos exists and matches the code expectation.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Supabase Migration Notes
 
-## Deploy on Vercel
+Apply migrations in timestamp order from `supabase/migrations`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The migrations define:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Profile ownership fields and RLS policies
+- Public profile insertion behavior
+- Public address rate limiting tables and RPC
+- Visit analytics tables
+- Address photos table and replacement RPC
+- Username normalization and display username preservation
+- Abuse reports
+- Address suspension fields
+- Admin analytics and monitoring RPCs
+
+For production, apply new migrations once in the Supabase SQL Editor or through the Supabase CLI. Confirm that all tables referenced by the app exist before deploying:
+
+```text
+profiles
+address_photos
+address_visits
+homepage_visits
+abuse_reports
+public_address_access_logs
+public_address_blocks
+```
+
+## Admin Login Notes
+
+Admin access is separate from normal Supabase Magic Link login.
+
+- Admin login route: `/admin/login`
+- Protected admin routes: `/admin`, `/admin/analytics`, `/admin/monitor`
+- The admin password must be stored as `ADMIN_PASSWORD_HASH`.
+- The admin session is signed with `ADMIN_SESSION_SECRET`.
+- The admin session cookie is HTTP-only and must not be read from client-side JavaScript.
+
+## Security Notes
+
+- Never commit `.env.local`, `.env.production`, service-role keys, password hashes, session secrets, owner tokens, or private credentials.
+- Treat owner-token management links as bearer secrets.
+- Keep `/admin` and private/token routes out of sitemap output.
+- Robots rules are not access control; private data must be protected by server-side authorization.
+- Public users must not be granted read access to abuse reports, visit analytics, or admin data.
+- Apply Supabase RLS policies carefully and verify them after every schema change.
