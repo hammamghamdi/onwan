@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/adminApi";
+import { requireAdmin, requireAdminWrite } from "@/lib/adminApi";
 import { normalizeUsername } from "@/lib/username";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { supabase, error } = await requireAdmin(request);
+  const { supabase, error } = await requireAdminWrite(request);
 
   if (error) return error;
 

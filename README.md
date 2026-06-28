@@ -120,5 +120,6 @@ Admin access is separate from normal Supabase Magic Link login.
 - Treat owner-token management links as bearer secrets.
 - Keep `/admin` and private/token routes out of sitemap output.
 - Robots rules are not access control; private data must be protected by server-side authorization.
+- Admin state-changing APIs require a signed admin session cookie and an `X-CSRF-Token` header derived from that session.
 - Public users must not be granted read access to abuse reports, visit analytics, or admin data.
 - Apply Supabase RLS policies carefully and verify them after every schema change.

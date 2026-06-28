@@ -104,3 +104,29 @@ export const verifyAdminSessionToken = (token?: string) => {
     return false;
   }
 };
+
+export const createAdminCsrfToken = (sessionToken: string) => {
+  return sign(`csrf:${sessionToken}`);
+};
+
+export const verifyAdminCsrfToken = (
+  sessionToken: string | undefined,
+  csrfToken: string | null
+) => {
+  if (!sessionToken || !csrfToken || !verifyAdminSessionToken(sessionToken)) {
+    return false;
+  }
+
+  try {
+    const expectedToken = createAdminCsrfToken(sessionToken);
+    const expectedBuffer = Buffer.from(expectedToken);
+    const actualBuffer = Buffer.from(csrfToken);
+
+    return (
+      expectedBuffer.length === actualBuffer.length &&
+      timingSafeEqual(expectedBuffer, actualBuffer)
+    );
+  } catch {
+    return false;
+  }
+};

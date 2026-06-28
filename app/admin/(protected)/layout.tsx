@@ -1,7 +1,9 @@
 import {
   adminSessionCookieName,
+  createAdminCsrfToken,
   verifyAdminSessionToken,
 } from "@/lib/adminSession";
+import { AdminCsrfProvider } from "@/lib/adminClient";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
@@ -19,10 +21,12 @@ export default async function ProtectedAdminLayout({
     redirect("/admin/login");
   }
 
+  const csrfToken = createAdminCsrfToken(session!);
+
   return (
-    <>
+    <AdminCsrfProvider csrfToken={csrfToken}>
       <AdminLogoutButton />
       {children}
-    </>
+    </AdminCsrfProvider>
   );
 }

@@ -1,10 +1,15 @@
 "use client";
 
+import { getAdminAuthHeaders } from "@/lib/adminClient";
+
 export function AdminLogoutButton() {
   const logout = async () => {
+    const headers = await getAdminAuthHeaders();
+
     await fetch("/api/admin/logout", {
       method: "POST",
       credentials: "same-origin",
+      headers,
     });
 
     window.location.href = "/admin/login";

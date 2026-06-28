@@ -1,9 +1,28 @@
+"use client";
+
+import { ReactNode } from "react";
+
+let adminCsrfToken = "";
+
+export function AdminCsrfProvider({
+  csrfToken,
+  children,
+}: {
+  csrfToken: string;
+  children: ReactNode;
+}) {
+  adminCsrfToken = csrfToken;
+
+  return children;
+}
+
 export const getAdminAuthHeaders = async () => {
-  return {};
+  return adminCsrfToken ? { "X-CSRF-Token": adminCsrfToken } : {};
 };
 
 export const fetchAdminJson = async <T,>(input: string, init?: RequestInit) => {
-  const headers = await getAdminAuthHeaders();
+  const method = init?.method?.toUpperCase() || "GET";
+  const headers = method === "GET" ? {} : await getAdminAuthHeaders();
 
   const response = await fetch(input, {
     ...init,

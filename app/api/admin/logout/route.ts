@@ -1,9 +1,13 @@
+import { requireAdminCsrf } from "@/lib/adminApi";
 import { adminSessionCookieName } from "@/lib/adminSession";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const csrfError = requireAdminCsrf(request);
+  if (csrfError) return csrfError;
+
   const response = NextResponse.json({ ok: true });
 
   response.cookies.set({
