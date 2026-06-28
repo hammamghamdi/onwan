@@ -16,13 +16,14 @@ export function AdminCsrfProvider({
   return children;
 }
 
-export const getAdminAuthHeaders = async () => {
+export const getAdminAuthHeaders = async (): Promise<Record<string, string>> => {
   return adminCsrfToken ? { "X-CSRF-Token": adminCsrfToken } : {};
 };
 
 export const fetchAdminJson = async <T,>(input: string, init?: RequestInit) => {
   const method = init?.method?.toUpperCase() || "GET";
-  const headers = method === "GET" ? {} : await getAdminAuthHeaders();
+  const headers: Record<string, string> =
+    method === "GET" ? {} : await getAdminAuthHeaders();
 
   const response = await fetch(input, {
     ...init,
