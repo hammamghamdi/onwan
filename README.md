@@ -99,6 +99,7 @@ The migrations define:
 - Public profile insertion behavior
 - Public address rate limiting tables and RPC
 - Visit analytics tables
+- Daily visit analytics aggregation and retention cleanup RPCs
 - Address photos table and replacement RPC
 - Username normalization and display username preservation
 - Abuse reports
@@ -116,6 +117,25 @@ abuse_reports
 public_address_access_logs
 public_address_blocks
 ```
+
+## Data Retention
+
+Visit analytics and public-address rate-limit logs have retention support so raw operational tables do not grow without bound.
+
+- `address_visit_daily_stats` stores daily public-address totals by username.
+- `homepage_visit_daily_stats` stores daily homepage visit totals.
+- `aggregate_visit_daily_stats()` aggregates raw visit rows older than the supplied cutoff and is safe to run repeatedly.
+- `retention_cleanup_preview()` reports how many rows are eligible for cleanup without changing data.
+- `run_retention_cleanup()` aggregates old visit rows first, then deletes eligible raw rows.
+
+Default retention windows:
+
+- Raw `address_visits`: aggregate and delete eligible rows older than 90 days.
+- Raw `homepage_visits`: aggregate and delete eligible rows older than 90 days.
+- `public_address_access_logs`: delete rows older than 30 days.
+- `public_address_blocks`: delete only expired blocks whose `blocked_until` is older than 30 days.
+
+Production warning: run `retention_cleanup_preview()` and review the counts before calling `run_retention_cleanup()`. The cleanup function is intentionally not executed by migrations. Optional pg_cron scheduling is kept outside migrations in `supabase/optional`; enable it only after production SQL review and after confirming pg_cron is available in Supabase.
 
 ## Admin Login Notes
 
