@@ -1,4 +1,5 @@
 const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+const productionAppUrl = "https://onwans.com";
 
 const localOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
 
@@ -13,6 +14,10 @@ export const getAppBaseUrl = () => {
 
   if (configuredAppUrl) {
     return configuredAppUrl;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return productionAppUrl;
   }
 
   return typeof window !== "undefined" ? window.location.origin : "";
