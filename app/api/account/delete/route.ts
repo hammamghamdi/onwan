@@ -43,19 +43,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (user.email) {
-    const { error: claimError } = await supabase
-      .from("profiles")
-      .update({ user_id: user.id })
-      .eq("email", user.email.trim().toLowerCase())
-      .is("user_id", null);
-
-    if (claimError) {
-      console.error("Account deletion ownership claim failed", claimError);
-      return NextResponse.json({ message: "Unable to delete account" }, { status: 500 });
-    }
-  }
-
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("id, username, photo1, photo2, photo3")

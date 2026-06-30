@@ -156,8 +156,11 @@ export default function RegisterPage() {
       name,
       displayName,
     });
+    const loginParams = new URLSearchParams({
+      redirect: `/setup?${setupParams.toString()}`,
+    });
 
-    router.push(`/setup?${setupParams.toString()}`);
+    router.push(`/login?${loginParams.toString()}`);
   };
 
   return (

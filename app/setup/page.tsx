@@ -52,6 +52,8 @@ const copy = {
     duplicateName: "هذا العنوان محجوز مسبقًا.",
     saveError: "حدث خطأ أثناء الحفظ.",
     unknownUploadError: "تعذر رفع الصورة: خطأ غير معروف.",
+    authChecking: "جاري التحقق من تسجيل الدخول...",
+    authRequired: "سجل دخولك أولًا لإنشاء العنوان.",
   },
   en: {
     title: "Add arrival details",
@@ -92,6 +94,8 @@ const copy = {
     duplicateName: "This address is already reserved.",
     saveError: "An error occurred while saving.",
     unknownUploadError: "Could not upload image: unknown error.",
+    authChecking: "Checking your login...",
+    authRequired: "Log in first to create this address.",
   },
 };
 
@@ -113,6 +117,8 @@ function SetupContent() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [userId, setUserId] = useState("");
   const [message, setMessage] = useState("");
   const blobPreviewUrls = useRef<string[]>([]);
 
@@ -266,6 +272,42 @@ function SetupContent() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (!isMounted) return;
+
+      if (error || !user) {
+        const setupParams = new URLSearchParams();
+        if (name) setupParams.set("name", name);
+        if (displayName) setupParams.set("displayName", displayName);
+
+        const loginParams = new URLSearchParams({
+          redirect: `/setup?${setupParams.toString()}`,
+        });
+
+        router.replace(`/login?${loginParams.toString()}`);
+        return;
+      }
+
+      setUserId(user.id);
+      setEmail(user.email || "");
+      setAuthChecking(false);
+    };
+
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [displayName, name, router]);
+
+  useEffect(() => {
     return () => {
       blobPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
       blobPreviewUrls.current = [];
@@ -305,6 +347,11 @@ function SetupContent() {
 
   const saveAddress = async () => {
     const cleanedMapUrl = extractUrl(mapUrl);
+
+    if (!userId) {
+      setMessage(text.authRequired);
+      return;
+    }
 
     if (
       !name ||
@@ -376,12 +423,11 @@ function SetupContent() {
       const uploadedPhotos = await uploadPhotos();
       const photoUrls = uploadedPhotos.map((photo) => photo.publicUrl);
       const photoStoragePaths = uploadedPhotos.map((photo) => photo.storagePath);
-      const ownerToken = crypto.randomUUID();
 
       const { error } = await supabase.from("profiles").insert({
         username: name,
         display_username: displayName,
-        owner_token: ownerToken,
+        user_id: userId,
         email: email.trim().toLowerCase(),
         city: city.trim(),
         map_url: cleanedMapUrl,
@@ -411,7 +457,6 @@ function SetupContent() {
         "replace_profile_address_photos",
         {
           p_username: name,
-          p_owner_token: ownerToken,
           p_storage_paths: photoStoragePaths,
         }
       );
@@ -423,7 +468,6 @@ function SetupContent() {
       const successParams = new URLSearchParams({
         name,
         displayName,
-        token: ownerToken,
       });
 
       router.push(`/success?${successParams.toString()}`);
@@ -444,6 +488,11 @@ function SetupContent() {
     >
       <LanguageNav language={language} setLanguage={setLanguage} />
 
+      {authChecking ? (
+        <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 text-center font-bold text-black shadow-sm">
+          {text.authChecking}
+        </div>
+      ) : (
       <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-sm">
         <h1 className="mb-3 text-center text-2xl font-bold text-black">
           {text.title}
@@ -587,6 +636,7 @@ function SetupContent() {
           {saving ? text.saving : text.submit}
         </button>
       </div>
+      )}
 
     </main>
   );

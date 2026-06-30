@@ -4,16 +4,13 @@ import { LanguageNav } from "@/app/components/LanguageNav";
 import { createAppUrl } from "@/lib/appUrl";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 const copy = {
   ar: {
     noEmail: "أدخل بريدك الإلكتروني.",
     invalidEmail: "أدخل بريدًا إلكترونيًا صحيحًا.",
-    noUserEmail: "المستخدم المسجل لا يحتوي على بريد إلكتروني.",
-    claimError:
-      "تم تسجيل الدخول، لكن تعذر ربط عناوينك بالبريد الإلكتروني.",
     authErrorPrefix: "تعذر إرسال رابط الدخول. رسالة Supabase:",
     rateLimit:
       "تم طلب روابط دخول كثيرة خلال وقت قصير. انتظر من 30 إلى 60 دقيقة ثم حاول مرة أخرى.",
@@ -29,9 +26,6 @@ const copy = {
   en: {
     noEmail: "Enter your email address.",
     invalidEmail: "Enter a valid email address.",
-    noUserEmail: "Authenticated user has no email.",
-    claimError:
-      "You are signed in, but we could not link your addresses to this email.",
     authErrorPrefix: "Could not send the login link. Supabase message:",
     rateLimit:
       "Too many login links were requested in a short time. Please wait 30 to 60 minutes and try again.",
@@ -47,18 +41,38 @@ const copy = {
 };
 
 type MessageKey = "rateLimit";
-type SupabaseSession = NonNullable<
-  Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
->;
+
+const getSafeInternalRedirect = (value: string | null) => {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/addresses";
+  }
+
+  try {
+    const parsed = new URL(value, "https://onwans.local");
+
+    if (parsed.origin !== "https://onwans.local") {
+      return "/addresses";
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/addresses";
+  }
+};
 
 const isSupabaseEmailRateLimit = (value: string) => {
   return value.toLowerCase().includes("email rate limit exceeded");
 };
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { language, setLanguage } = useLanguage();
   const text = copy[language];
+  const redirectPath = useMemo(
+    () => getSafeInternalRedirect(searchParams.get("redirect")),
+    [searchParams]
+  );
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -77,46 +91,17 @@ export default function LoginPage() {
   };
 
   const getMagicLinkRedirectUrl = useCallback(() => {
-    return createAppUrl("/addresses");
-  }, []);
-
-  const connectOwnedAddresses = useCallback(
-    async (userId: string, userEmail?: string) => {
-      if (!userEmail) {
-        console.log(text.noUserEmail);
-        return;
-      }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(
-          { user_id: userId },
-          {
-            count: "exact",
-          }
-        )
-        .eq("email", userEmail.trim().toLowerCase())
-        .is("user_id", null);
-
-      if (error) {
-        console.log(error);
-        setIsSuccess(false);
-        setMessageKey(null);
-        setMessage(text.claimError);
-      }
-    },
-    [text.claimError, text.noUserEmail]
-  );
+    const params = new URLSearchParams({ redirect: redirectPath });
+    return createAppUrl(`/login?${params.toString()}`);
+  }, [redirectPath]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const redirectAuthenticatedUser = async (session: SupabaseSession) => {
-      await connectOwnedAddresses(session.user.id, session.user.email);
-
+    const redirectAuthenticatedUser = async () => {
       if (!isMounted) return;
 
-      router.replace("/addresses");
+      router.replace(redirectPath);
     };
 
     const handleSession = async (
@@ -126,7 +111,7 @@ export default function LoginPage() {
     ) => {
       if (!session?.user) return false;
 
-      await redirectAuthenticatedUser(session);
+      await redirectAuthenticatedUser();
       return true;
     };
 
@@ -180,7 +165,7 @@ export default function LoginPage() {
         session?.user
       ) {
         setAuthChecking(true);
-        redirectAuthenticatedUser(session);
+        redirectAuthenticatedUser();
       }
     });
 
@@ -190,7 +175,7 @@ export default function LoginPage() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [connectOwnedAddresses, router]);
+  }, [redirectPath, router]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -293,5 +278,13 @@ export default function LoginPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

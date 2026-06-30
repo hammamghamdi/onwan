@@ -42,13 +42,6 @@ function SuccessContent() {
   const displayName = getDisplayUsername(
     searchParams.get("displayName") || name
   );
-  const ownerToken = searchParams.get("token") || "";
-
-  useEffect(() => {
-    if (!ownerToken || !name) return;
-
-    localStorage.setItem(`onwan_owner_${name}`, ownerToken);
-  }, [name, ownerToken]);
 
   const [copied, setCopied] = useState(false);
   const [qrReady, setQrReady] = useState(false);
@@ -147,7 +140,7 @@ function SuccessContent() {
         </Link>
 
         <Link
-          href={`/manage?name=${displayName || name}&token=${ownerToken}`}
+          href="/addresses"
           className="block w-full rounded-xl border border-[#006b4f] py-4 font-bold text-[#006b4f]"
         >
           {text.edit}

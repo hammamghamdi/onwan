@@ -12,13 +12,11 @@ type AddressProfile = {
   username: string;
   display_username: string | null;
   city: string | null;
-  owner_token: string | null;
 };
 
 const copy = {
   ar: {
     authCheckError: "تعذر التحقق من تسجيل الدخول.",
-    claimError: "تم تسجيل الدخول، لكن تعذر ربط العناوين بهذا البريد.",
     loadError: "تعذر تحميل عناوينك.",
     logoutError: "تعذر تسجيل الخروج. حاول مرة أخرى.",
     title: "عناويني",
@@ -43,7 +41,6 @@ const copy = {
   },
   en: {
     authCheckError: "Could not verify your login.",
-    claimError: "You are signed in, but we could not link addresses to this email.",
     loadError: "Could not load your addresses.",
     logoutError: "Could not log out. Try again.",
     title: "My Addresses",
@@ -161,26 +158,9 @@ export default function AddressesPage() {
 
       setIsLoggedIn(true);
 
-      if (user.email) {
-        const { error: claimError } = await supabase
-          .from("profiles")
-          .update({ user_id: user.id })
-          .eq("email", user.email.trim().toLowerCase())
-          .is("user_id", null);
-
-        if (!isMounted) return;
-
-        if (claimError) {
-          console.log(claimError);
-          setMessage(text.claimError);
-          setLoading(false);
-          return;
-        }
-      }
-
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, display_username, city, owner_token")
+        .select("username, display_username, city")
         .eq("user_id", user.id)
         .order("username", { ascending: true });
 
@@ -203,7 +183,7 @@ export default function AddressesPage() {
     return () => {
       isMounted = false;
     };
-  }, [text.authCheckError, text.claimError, text.loadError]);
+  }, [text.authCheckError, text.loadError]);
 
   return (
     <main
@@ -278,14 +258,6 @@ export default function AddressesPage() {
                     {text.view}
                   </Link>
 
-                  {address.owner_token && (
-                    <Link
-                      href={`/manage?name=${displayUsername}&token=${address.owner_token}`}
-                      className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
-                    >
-                      {text.edit}
-                    </Link>
-                  )}
                 </section>
               );
             })}

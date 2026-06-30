@@ -6,7 +6,7 @@ Onwan is an Arabic-first public address sharing app. Users reserve a short publi
 https://onwans.com/{username}
 ```
 
-The app includes public address pages, QR/share flows, owner-token management, Supabase Magic Link login for normal users, account deletion, abuse reporting, address suspension, public policy pages, and a protected admin panel.
+The app includes public address pages, QR/share flows, Supabase Magic Link login for normal users, authenticated address management, account deletion, abuse reporting, address suspension, public policy pages, and a protected admin panel.
 
 ## Tech Stack
 
@@ -97,6 +97,7 @@ The migrations define:
 
 - Profile ownership fields and RLS policies
 - Public profile insertion behavior
+- Strict authenticated profile ownership
 - Public address rate limiting tables and RPC
 - Visit analytics tables
 - Daily visit analytics aggregation and retention cleanup RPCs
@@ -164,3 +165,15 @@ Admin access is separate from normal Supabase Magic Link login.
 - Admin state-changing APIs require a signed admin session cookie and an `X-CSRF-Token` header derived from that session.
 - Public users must not be granted read access to abuse reports, visit analytics, or admin data.
 - Apply Supabase RLS policies carefully and verify them after every schema change.
+
+## Ownership Model
+
+Onwan uses strict Supabase Auth ownership for address creation and management.
+
+- Public username availability checks remain open through `/register`.
+- Creating an address requires Magic Link login and continues at `/setup`.
+- New addresses are inserted with `profiles.user_id = auth.uid()`.
+- `/addresses` is the authenticated management surface and only loads rows owned by the logged-in user.
+- `/manage` is deprecated and redirects to `/addresses`; token-based editing is disabled.
+- `owner_token` has been removed from new code paths and dropped by the forward Supabase migration.
+- RLS ownership rules require `auth.uid() = profiles.user_id` for profile insert, update, and delete.
