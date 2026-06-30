@@ -45,7 +45,7 @@ create index if not exists homepage_visit_daily_stats_stat_date_idx
 alter table public.homepage_visit_daily_stats enable row level security;
 
 create or replace function public.aggregate_visit_daily_stats(
-  p_before timestamptz default now() - interval '90 days'
+  p_now timestamptz default now()
 )
 returns jsonb
 language plpgsql
@@ -53,6 +53,7 @@ security definer
 set search_path = public
 as $$
 declare
+  visit_cutoff_date date := p_now::date - 90;
   address_rows_considered integer;
   homepage_rows_considered integer;
   address_days_upserted integer;
@@ -61,14 +62,14 @@ begin
   select count(*)::integer
   into address_rows_considered
   from public.address_visits
-  where visited_at < p_before
+  where visited_at::date < visit_cutoff_date
     and username is not null
     and btrim(username) <> '';
 
   select count(*)::integer
   into homepage_rows_considered
   from public.homepage_visits
-  where created_at < p_before
+  where created_at::date < visit_cutoff_date
     and visitor_id is not null
     and btrim(visitor_id) <> '';
 
@@ -82,7 +83,7 @@ begin
         count(*) filter (where is_unique)
       )::integer as unique_visitors
     from public.address_visits
-    where visited_at < p_before
+    where visited_at::date < visit_cutoff_date
       and username is not null
       and btrim(username) <> ''
     group by visited_at::date, username
@@ -119,7 +120,7 @@ begin
       count(*)::integer as total_visits,
       count(distinct visitor_id)::integer as unique_visitors
     from public.homepage_visits
-    where created_at < p_before
+    where created_at::date < visit_cutoff_date
       and visitor_id is not null
       and btrim(visitor_id) <> ''
     group by created_at::date
@@ -149,7 +150,8 @@ begin
   from upserted;
 
   return jsonb_build_object(
-    'before', p_before,
+    'now', p_now,
+    'visit_cutoff_date', visit_cutoff_date,
     'address_rows_considered', coalesce(address_rows_considered, 0),
     'homepage_rows_considered', coalesce(homepage_rows_considered, 0),
     'address_days_upserted', coalesce(address_days_upserted, 0),
@@ -167,17 +169,37 @@ security definer
 set search_path = public
 as $$
 select jsonb_build_object(
-  'address_visits_older_than_90_days',
+  'visit_cutoff_date',
+    (p_now::date - 90),
+  'address_visits_eligible_for_cleanup',
     (
       select count(*)::integer
       from public.address_visits
-      where visited_at < p_now - interval '90 days'
+      where visited_at::date < (p_now::date - 90)
+        and username is not null
+        and btrim(username) <> ''
     ),
-  'homepage_visits_older_than_90_days',
+  'address_visits_invalid_rows_retained',
+    (
+      select count(*)::integer
+      from public.address_visits
+      where visited_at::date < (p_now::date - 90)
+        and (username is null or btrim(username) = '')
+    ),
+  'homepage_visits_eligible_for_cleanup',
     (
       select count(*)::integer
       from public.homepage_visits
-      where created_at < p_now - interval '90 days'
+      where created_at::date < (p_now::date - 90)
+        and visitor_id is not null
+        and btrim(visitor_id) <> ''
+    ),
+  'homepage_visits_invalid_rows_retained',
+    (
+      select count(*)::integer
+      from public.homepage_visits
+      where created_at::date < (p_now::date - 90)
+        and (visitor_id is null or btrim(visitor_id) = '')
     ),
   'public_address_access_logs_older_than_30_days',
     (
@@ -203,7 +225,7 @@ security definer
 set search_path = public
 as $$
 declare
-  visit_cutoff timestamptz := p_now - interval '90 days';
+  visit_cutoff_date date := p_now::date - 90;
   log_cutoff timestamptz := p_now - interval '30 days';
   aggregation_summary jsonb;
   deleted_address_visits integer;
@@ -211,11 +233,11 @@ declare
   deleted_access_logs integer;
   deleted_expired_blocks integer;
 begin
-  aggregation_summary := public.aggregate_visit_daily_stats(visit_cutoff);
+  aggregation_summary := public.aggregate_visit_daily_stats(p_now);
 
   with deleted as (
     delete from public.address_visits
-    where visited_at < visit_cutoff
+    where visited_at::date < visit_cutoff_date
       and username is not null
       and btrim(username) <> ''
     returning 1
@@ -226,7 +248,7 @@ begin
 
   with deleted as (
     delete from public.homepage_visits
-    where created_at < visit_cutoff
+    where created_at::date < visit_cutoff_date
       and visitor_id is not null
       and btrim(visitor_id) <> ''
     returning 1
@@ -255,7 +277,7 @@ begin
 
   return jsonb_build_object(
     'cleanup_time', p_now,
-    'visit_cutoff', visit_cutoff,
+    'visit_cutoff_date', visit_cutoff_date,
     'log_cutoff', log_cutoff,
     'aggregation', aggregation_summary,
     'deleted_address_visits', coalesce(deleted_address_visits, 0),
