@@ -458,6 +458,35 @@ export default function UserAddressPage() {
               />
             </div>
 
+            {photos.length > 1 && (
+              <div
+                className="mt-3 flex gap-2 overflow-x-auto pb-1"
+                aria-label={text.photos}
+              >
+                {photos.map((photo, index) => (
+                  <button
+                    key={`${photo.url}-${index}`}
+                    type="button"
+                    onClick={() => showPhoto(index)}
+                    aria-current={currentPhoto === index ? "true" : undefined}
+                    aria-label={`${text.photoAlt} ${index + 1}`}
+                    className={`h-16 w-16 flex-none overflow-hidden rounded-xl border-2 bg-gray-100 ${
+                      currentPhoto === index
+                        ? "border-[#006b4f]"
+                        : "border-transparent"
+                    }`}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={`${text.photoAlt} ${index + 1}`}
+                      draggable={false}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
             {photos[currentPhoto].caption && (
               <p className="mt-3 text-center text-sm leading-6 text-gray-700">
                 {photos[currentPhoto].caption}

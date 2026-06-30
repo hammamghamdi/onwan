@@ -41,6 +41,7 @@ const copy = {
 };
 
 type MessageKey = "rateLimit";
+const LOGIN_REDIRECT_STORAGE_KEY = "onwan_login_redirect";
 
 const getSafeInternalRedirect = (value: string | null) => {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -69,7 +70,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { language, setLanguage } = useLanguage();
   const text = copy[language];
-  const redirectPath = useMemo(
+  const redirectPathFromQuery = useMemo(
     () => getSafeInternalRedirect(searchParams.get("redirect")),
     [searchParams]
   );
@@ -90,16 +91,41 @@ function LoginContent() {
     setMessageKey(null);
   };
 
+  const getStoredRedirectPath = useCallback(() => {
+    if (typeof window === "undefined") {
+      return "/addresses";
+    }
+
+    return getSafeInternalRedirect(
+      window.sessionStorage.getItem(LOGIN_REDIRECT_STORAGE_KEY)
+    );
+  }, []);
+
+  const getRedirectPath = useCallback(() => {
+    if (redirectPathFromQuery !== "/addresses") {
+      return redirectPathFromQuery;
+    }
+
+    return getStoredRedirectPath();
+  }, [getStoredRedirectPath, redirectPathFromQuery]);
+
   const getMagicLinkRedirectUrl = useCallback(() => {
+    const redirectPath = getRedirectPath();
     const params = new URLSearchParams({ redirect: redirectPath });
     return createAppUrl(`/login?${params.toString()}`);
-  }, [redirectPath]);
+  }, [getRedirectPath]);
 
   useEffect(() => {
     let isMounted = true;
 
     const redirectAuthenticatedUser = async () => {
       if (!isMounted) return;
+
+      const redirectPath = getRedirectPath();
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(LOGIN_REDIRECT_STORAGE_KEY);
+      }
 
       router.replace(redirectPath);
     };
@@ -175,7 +201,7 @@ function LoginContent() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [redirectPath, router]);
+  }, [getRedirectPath, router]);
 
   const sendMagicLink = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -194,6 +220,12 @@ function LoginContent() {
     }
 
     setLoading(true);
+
+    const redirectPath = getRedirectPath();
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(LOGIN_REDIRECT_STORAGE_KEY, redirectPath);
+    }
 
     const { error } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
