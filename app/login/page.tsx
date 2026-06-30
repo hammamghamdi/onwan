@@ -2,6 +2,7 @@
 
 import { LanguageNav } from "@/app/components/LanguageNav";
 import { createAppUrl } from "@/lib/appUrl";
+import { getSafeInternalRedirect } from "@/lib/safeRedirect";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/useLanguage";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -42,24 +43,6 @@ const copy = {
 
 type MessageKey = "rateLimit";
 const LOGIN_REDIRECT_STORAGE_KEY = "onwan_login_redirect";
-
-const getSafeInternalRedirect = (value: string | null) => {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/addresses";
-  }
-
-  try {
-    const parsed = new URL(value, "https://onwans.local");
-
-    if (parsed.origin !== "https://onwans.local") {
-      return "/addresses";
-    }
-
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
-    return "/addresses";
-  }
-};
 
 const isSupabaseEmailRateLimit = (value: string) => {
   return value.toLowerCase().includes("email rate limit exceeded");
@@ -111,8 +94,8 @@ function LoginContent() {
 
   const getMagicLinkRedirectUrl = useCallback(() => {
     const redirectPath = getRedirectPath();
-    const params = new URLSearchParams({ redirect: redirectPath });
-    return createAppUrl(`/login?${params.toString()}`);
+    const params = new URLSearchParams({ next: redirectPath });
+    return createAppUrl(`/auth/callback?${params.toString()}`);
   }, [getRedirectPath]);
 
   useEffect(() => {
