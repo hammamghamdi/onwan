@@ -24,6 +24,12 @@ export async function GET(request: NextRequest) {
       total_unique_visitors: 0,
       latest_registered_addresses: [],
       most_visited_addresses: [],
+      raw_table_counts: {
+        address_visits: 0,
+        homepage_visits: 0,
+        public_address_access_logs: 0,
+      },
+      retention_cleanup_warning: false,
     }
   );
 }

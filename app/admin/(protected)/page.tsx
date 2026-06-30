@@ -38,6 +38,10 @@ type AddressesResponse = {
   rows: AddressRow[];
 };
 
+type AnalyticsResponse = {
+  retention_cleanup_warning?: boolean;
+};
+
 const pageSize = 25;
 const statuses: ReportStatus[] = ["new", "reviewed", "ignored", "action_taken"];
 
@@ -59,6 +63,7 @@ export default function AdminPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
+  const [retentionWarning, setRetentionWarning] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const totalPages = useMemo(
@@ -87,12 +92,17 @@ export default function AdminPage() {
     }
   };
 
+  const loadAnalytics = async () => {
+    const result = await fetchAdminJson<AnalyticsResponse>("/api/admin/analytics");
+    if (result.data) setRetentionWarning(Boolean(result.data.retention_cleanup_warning));
+  };
+
   useEffect(() => {
     let isMounted = true;
 
     const load = async () => {
       setLoading(true);
-      await Promise.all([loadReports(), loadAddresses()]);
+      await Promise.all([loadReports(), loadAddresses(), loadAnalytics()]);
       if (!isMounted) return;
       setLoading(false);
     };
@@ -177,6 +187,12 @@ export default function AdminPage() {
           <p className="mb-4 rounded-xl bg-white p-3 text-center font-bold text-[#006b4f] shadow-sm">
             {message}
           </p>
+        )}
+
+        {retentionWarning && (
+          <section className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm font-bold text-amber-900 shadow-sm">
+            Retention cleanup is not automated yet. Review cleanup preview and consider enabling pg_cron.
+          </section>
         )}
 
         {loading && (

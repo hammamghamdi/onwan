@@ -120,7 +120,7 @@ public_address_blocks
 
 ## Data Retention
 
-Visit analytics and public-address rate-limit logs have retention support so raw operational tables do not grow without bound.
+Visit analytics and public-address rate-limit logs have retention support so raw operational tables do not grow without bound. Daily aggregation uses UTC calendar days for cutoffs, grouping, and raw/aggregate merge checks.
 
 - `address_visit_daily_stats` stores daily public-address totals by username.
 - `homepage_visit_daily_stats` stores daily homepage visit totals.
@@ -136,6 +136,14 @@ Default retention windows:
 - `public_address_blocks`: delete only expired blocks whose `blocked_until` is older than 30 days.
 
 Production warning: run `retention_cleanup_preview()` and review the counts before calling `run_retention_cleanup()`. The cleanup function is intentionally not executed by migrations. Optional pg_cron scheduling is kept outside migrations in `supabase/optional`; enable it only after production SQL review and after confirming pg_cron is available in Supabase.
+
+Monthly manual check until pg_cron is approved:
+
+```sql
+select public.retention_cleanup_preview();
+```
+
+pg_cron remains disabled unless manually approved and enabled in Supabase. The admin analytics dashboard shows a visible warning when raw analytics/log tables exceed operational thresholds (`address_visits >= 100000`, `homepage_visits >= 50000`, or `public_address_access_logs >= 100000`) so cleanup review is not forgotten.
 
 ## Admin Login Notes
 

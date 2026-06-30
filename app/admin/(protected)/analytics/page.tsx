@@ -19,6 +19,12 @@ type AnalyticsData = {
   total_unique_visitors: number;
   latest_registered_addresses: AddressSummary[];
   most_visited_addresses: AddressSummary[];
+  raw_table_counts?: {
+    address_visits: number;
+    homepage_visits: number;
+    public_address_access_logs: number;
+  };
+  retention_cleanup_warning?: boolean;
 };
 
 const formatNumber = (value: number | undefined) =>
@@ -76,6 +82,12 @@ export default function AdminAnalyticsPage() {
 
         {data && (
           <>
+            {data.retention_cleanup_warning && (
+              <section className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm font-bold text-amber-900 shadow-sm">
+                Retention cleanup is not automated yet. Review cleanup preview and consider enabling pg_cron.
+              </section>
+            )}
+
             <section className="mb-5 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-white p-5 shadow-sm">
                 <p className="mb-2 text-sm font-bold text-gray-500">إجمالي العناوين</p>
