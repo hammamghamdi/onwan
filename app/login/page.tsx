@@ -120,6 +120,13 @@ function LoginContent() {
     ) => {
       if (!session?.user) return false;
 
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) return false;
+
       await redirectAuthenticatedUser();
       return true;
     };

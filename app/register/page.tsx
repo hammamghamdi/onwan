@@ -156,6 +156,16 @@ export default function RegisterPage() {
       name,
       displayName,
     });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      router.push(`/setup?${setupParams.toString()}`);
+      return;
+    }
+
     const loginParams = new URLSearchParams({
       redirect: `/setup?${setupParams.toString()}`,
     });
