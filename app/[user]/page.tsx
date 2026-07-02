@@ -283,7 +283,7 @@ export default function UserAddressPage() {
     return (
       <main
         dir={pageDirection}
-        className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+        className="min-h-[100svh] bg-[#f7f8f5] px-3 py-3 text-black"
       >
         <div className="mx-auto w-full max-w-sm">
           {header}
@@ -297,7 +297,7 @@ export default function UserAddressPage() {
 
   if (blockWarning) {
     return (
-      <main dir="rtl" className="min-h-screen bg-[#f7f8f5] px-3 py-4 text-black">
+      <main dir="rtl" className="min-h-[100svh] bg-[#f7f8f5] px-3 py-4 text-black">
         <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-sm">
           <div className="space-y-4 text-sm font-bold leading-7 text-black">
             <p>{blockWarning.ar}</p>
@@ -314,7 +314,7 @@ export default function UserAddressPage() {
     return (
       <main
         dir={pageDirection}
-        className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+        className="min-h-[100svh] bg-[#f7f8f5] px-3 py-3 text-black"
       >
         <div className="mx-auto w-full max-w-sm">
           {header}
@@ -331,7 +331,7 @@ export default function UserAddressPage() {
 
   if (address.is_suspended) {
     return (
-      <main dir="rtl" className="grid min-h-screen place-items-center bg-[#f7f8f5] px-4 text-black">
+      <main dir="rtl" className="grid min-h-[100svh] place-items-center bg-[#f7f8f5] px-4 text-black">
         <p className="text-center text-xl font-bold">
           هذا العنوان غير متاح حاليًا.
         </p>
@@ -396,7 +396,7 @@ export default function UserAddressPage() {
   return (
     <main
       dir={pageDirection}
-      className="min-h-screen bg-[#f7f8f5] px-3 py-3 text-black"
+      className="min-h-[100svh] bg-[#f7f8f5] px-3 py-3 text-black"
     >
       <div className="mx-auto w-full max-w-sm">
         {header}
@@ -506,7 +506,7 @@ export default function UserAddressPage() {
             {text.instructions}
           </h2>
 
-          <div className="space-y-2 text-base leading-7 text-black">
+          <div className="min-w-0 space-y-2 text-base leading-7 text-black">
             <p>{address.instructions_ar || text.noInstructions}</p>
 
             {address.instructions_en &&
@@ -526,7 +526,7 @@ export default function UserAddressPage() {
           </div>
         </section>
 
-        <section className="min-w-0 max-w-full overflow-hidden pb-5 text-center text-sm">
+        <section className="min-w-0 max-w-full overflow-hidden pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center text-sm">
           {!reportOpen && !reportMessage && (
             <button
               type="button"
@@ -600,7 +600,7 @@ export default function UserAddressPage() {
             className="relative z-0 w-full max-w-3xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative h-[82vh] w-full">
+            <div className="relative h-[82svh] w-full">
               <Image
                 src={photos[lightboxPhoto].url}
                 alt={`${text.photoAlt} ${lightboxPhoto + 1}`}
