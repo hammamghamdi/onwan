@@ -4,6 +4,7 @@ import { createPublicAddressUrl } from "@/lib/appUrl";
 import { createAddressShareMessage } from "@/lib/shareAddress";
 import { supabase } from "@/lib/supabase";
 import { normalizeUsername } from "@/lib/username";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { type KeyboardEvent, useEffect, useState } from "react";
@@ -447,14 +448,17 @@ export default function UserAddressPage() {
                 handlePhotoTouchEnd(event.changedTouches[0]?.clientX ?? 0)
               }
               onTouchCancel={() => setTouchStartX(null)}
-              className="overflow-hidden rounded-2xl bg-gray-100 touch-pan-y"
+              className="relative h-64 w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm touch-pan-y"
             >
-              <img
+              <Image
                 src={photos[currentPhoto].url}
                 alt={`${text.photoAlt} ${currentPhoto + 1}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 384px"
+                priority={currentPhoto === 0}
                 draggable={false}
                 onClick={() => setLightboxPhoto(currentPhoto)}
-                className="h-64 w-full select-none rounded-2xl object-contain shadow-sm"
+                className="select-none rounded-2xl object-contain"
               />
             </div>
 
@@ -470,15 +474,17 @@ export default function UserAddressPage() {
                     onClick={() => showPhoto(index)}
                     aria-current={currentPhoto === index ? "true" : undefined}
                     aria-label={`${text.photoAlt} ${index + 1}`}
-                    className={`h-16 w-16 flex-none overflow-hidden rounded-xl border-2 bg-gray-100 ${
+                    className={`relative h-16 w-16 flex-none overflow-hidden rounded-xl border-2 bg-gray-100 ${
                       currentPhoto === index
                         ? "border-[#006b4f]"
                         : "border-transparent"
                     }`}
                   >
-                    <img
+                    <Image
                       src={photo.url}
                       alt={`${text.photoAlt} ${index + 1}`}
+                      fill
+                      sizes="64px"
                       draggable={false}
                       className="h-full w-full object-cover"
                     />
@@ -590,15 +596,16 @@ export default function UserAddressPage() {
             </span>
           </button>
 
-          <div
-            className="w-full max-w-3xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <img
-              src={photos[lightboxPhoto].url}
-              alt={`${text.photoAlt} ${lightboxPhoto + 1}`}
-              className="max-h-[82vh] w-full rounded-2xl object-contain shadow-2xl"
-            />
+          <div className="w-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
+            <div className="relative h-[82vh] w-full">
+              <Image
+                src={photos[lightboxPhoto].url}
+                alt={`${text.photoAlt} ${lightboxPhoto + 1}`}
+                fill
+                sizes="100vw"
+                className="rounded-2xl object-contain shadow-2xl"
+              />
+            </div>
 
             {photos[lightboxPhoto].caption && (
               <p className="mt-4 text-center text-sm leading-6 text-white">
