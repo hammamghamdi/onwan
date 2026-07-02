@@ -456,6 +456,7 @@ export default function UserAddressPage() {
                 fill
                 sizes="(max-width: 768px) 100vw, 384px"
                 priority={currentPhoto === 0}
+                unoptimized
                 draggable={false}
                 onClick={() => setLightboxPhoto(currentPhoto)}
                 className="select-none rounded-2xl object-contain"
