@@ -549,7 +549,7 @@ export default function UserAddressPage() {
                   setReportMessage("");
                 }}
                 rows={3}
-                className="mb-3 w-full max-w-full rounded-xl border p-3 text-black"
+                className="mb-3 w-full max-w-full rounded-xl border p-3 text-base text-black"
                 placeholder={text.reportPlaceholder}
               />
               <button
