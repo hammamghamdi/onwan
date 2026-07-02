@@ -172,17 +172,6 @@ export default function UserAddressPage() {
             if (error) console.log(error);
           });
 
-        fetch(`/api/public-address/${encodeURIComponent(user)}?photos=1`, {
-          cache: "no-store",
-        })
-          .then((photoResponse) => photoResponse.json())
-          .then((photoResult: PublicAddressResponse) => {
-            if (photoResult.status === "ok") {
-              setAddress(photoResult.address);
-            }
-          })
-          .catch((error) => console.log(error));
-
         return;
       }
 
