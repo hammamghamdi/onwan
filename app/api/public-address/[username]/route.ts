@@ -218,6 +218,7 @@ export async function GET(
   const requestedUsername = normalizeUsername(username);
   const ipHash = hashIp(getVisitorIp(request));
   const userAgent = request.headers.get("user-agent") || null;
+  const includePhotos = request.nextUrl.searchParams.get("photos") === "1";
   const now = new Date();
   const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
   const blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MS);
@@ -344,44 +345,46 @@ export async function GET(
 
     let publicPhotos = legacyPhotos;
 
-    const photosResult = await withTimeout<{
-      data: AddressPhotoRow[] | null;
-      error: { message: string } | null;
-    }>(
-      supabase
-        .from("address_photos")
-        .select("storage_path, display_order, caption")
-        .eq("profile_id", address.id)
-        .order("display_order", { ascending: true })
-        .returns<AddressPhotoRow[]>(),
-      1000,
-      {
-        data: null,
-        error: { message: "Address photos lookup timed out" },
+    if (includePhotos) {
+      const photosResult = await withTimeout<{
+        data: AddressPhotoRow[] | null;
+        error: { message: string } | null;
+      }>(
+        supabase
+          .from("address_photos")
+          .select("storage_path, display_order, caption")
+          .eq("profile_id", address.id)
+          .order("display_order", { ascending: true })
+          .returns<AddressPhotoRow[]>(),
+        1000,
+        {
+          data: null,
+          error: { message: "Address photos lookup timed out" },
+        }
+      );
+
+      const { data: photoRows, error: photosError } = photosResult;
+
+      if (photosError) {
+        console.error("Address photos lookup failed", photosError);
       }
-    );
 
-    const { data: photoRows, error: photosError } = photosResult;
+      const normalizedPhotos: PublicAddressPhoto[] =
+        photoRows?.map((photo) => {
+          const { data } = supabase.storage
+            .from("address-photos")
+            .getPublicUrl(photo.storage_path);
 
-    if (photosError) {
-      console.error("Address photos lookup failed", photosError);
+          return {
+            url: data.publicUrl,
+            caption: photo.caption,
+          };
+        }) || [];
+
+      publicPhotos =
+        normalizedPhotos.length > 0 ? normalizedPhotos : legacyPhotos;
+      logTiming("photos");
     }
-
-    const normalizedPhotos: PublicAddressPhoto[] =
-      photoRows?.map((photo) => {
-        const { data } = supabase.storage
-          .from("address-photos")
-          .getPublicUrl(photo.storage_path);
-
-        return {
-          url: data.publicUrl,
-          caption: photo.caption,
-        };
-      }) || [];
-
-    publicPhotos =
-      normalizedPhotos.length > 0 ? normalizedPhotos : legacyPhotos;
-    logTiming("photos");
 
     const publicAddress = {
       username: address.username,
