@@ -537,33 +537,7 @@ export default function UserAddressPage() {
             </button>
           )}
 
-          {reportOpen && (
-            <div className="w-full max-w-full rounded-2xl bg-white p-4 text-right shadow-sm">
-              <label className="mb-2 block font-bold text-black">
-                {text.reportDetails}
-              </label>
-              <textarea
-                value={reportDetails}
-                onChange={(event) => {
-                  setReportDetails(event.target.value);
-                  setReportMessage("");
-                }}
-                rows={3}
-                className="mb-3 w-full max-w-full rounded-xl border p-3 text-base text-black"
-                placeholder={text.reportPlaceholder}
-              />
-              <button
-                type="button"
-                onClick={submitReport}
-                disabled={reportSubmitting}
-                className="w-full rounded-xl bg-[#006b4f] py-3 font-bold text-white disabled:opacity-60"
-              >
-                {reportSubmitting ? text.reportSubmitting : text.reportSubmit}
-              </button>
-            </div>
-          )}
-
-          {reportMessage && (
+          {reportMessage && !reportOpen && (
             <p className="mt-3 max-w-full break-words rounded-xl bg-white p-3 font-bold text-[#006b4f] shadow-sm">
               {reportMessage}
             </p>
@@ -613,6 +587,56 @@ export default function UserAddressPage() {
             {photos[lightboxPhoto].caption && (
               <p className="mt-4 text-center text-sm leading-6 text-white">
                 {photos[lightboxPhoto].caption}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {reportOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+          onClick={() => setReportOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-4 text-right text-sm shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setReportOpen(false)}
+              className="mb-3 font-bold text-gray-500 underline underline-offset-4"
+            >
+              {text.close}
+            </button>
+
+            <label className="mb-2 block font-bold text-black">
+              {text.reportDetails}
+            </label>
+            <textarea
+              value={reportDetails}
+              onChange={(event) => {
+                setReportDetails(event.target.value);
+                setReportMessage("");
+              }}
+              rows={3}
+              className="mb-3 w-full max-w-full rounded-xl border p-3 text-base text-black"
+              placeholder={text.reportPlaceholder}
+            />
+            <button
+              type="button"
+              onClick={submitReport}
+              disabled={reportSubmitting}
+              className="w-full rounded-xl bg-[#006b4f] py-3 font-bold text-white disabled:opacity-60"
+            >
+              {reportSubmitting ? text.reportSubmitting : text.reportSubmit}
+            </button>
+
+            {reportMessage && (
+              <p className="mt-3 max-w-full break-words rounded-xl bg-white p-3 font-bold text-[#006b4f] shadow-sm">
+                {reportMessage}
               </p>
             )}
           </div>
