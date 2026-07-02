@@ -526,7 +526,7 @@ export default function UserAddressPage() {
           </div>
         </section>
 
-        <section className="pb-5 text-center text-sm">
+        <section className="min-w-0 max-w-full overflow-hidden pb-5 text-center text-sm">
           {!reportOpen && !reportMessage && (
             <button
               type="button"
@@ -538,7 +538,7 @@ export default function UserAddressPage() {
           )}
 
           {reportOpen && (
-            <div className="rounded-2xl bg-white p-4 text-right shadow-sm">
+            <div className="w-full max-w-full rounded-2xl bg-white p-4 text-right shadow-sm">
               <label className="mb-2 block font-bold text-black">
                 {text.reportDetails}
               </label>
@@ -549,7 +549,7 @@ export default function UserAddressPage() {
                   setReportMessage("");
                 }}
                 rows={3}
-                className="mb-3 w-full rounded-xl border p-3 text-black"
+                className="mb-3 w-full max-w-full rounded-xl border p-3 text-black"
                 placeholder={text.reportPlaceholder}
               />
               <button
@@ -564,7 +564,7 @@ export default function UserAddressPage() {
           )}
 
           {reportMessage && (
-            <p className="mt-3 rounded-xl bg-white p-3 font-bold text-[#006b4f] shadow-sm">
+            <p className="mt-3 max-w-full break-words rounded-xl bg-white p-3 font-bold text-[#006b4f] shadow-sm">
               {reportMessage}
             </p>
           )}
@@ -589,14 +589,17 @@ export default function UserAddressPage() {
             type="button"
             aria-label={text.close}
             onClick={() => setLightboxPhoto(null)}
-            className="absolute end-3 top-3 flex h-16 w-16 items-center justify-center rounded-full text-black"
+            className="absolute end-3 top-3 z-20 flex h-16 w-16 items-center justify-center rounded-full text-black"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-xl font-bold shadow-lg">
               x
             </span>
           </button>
 
-          <div className="w-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="relative z-0 w-full max-w-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="relative h-[82vh] w-full">
               <Image
                 src={photos[lightboxPhoto].url}
