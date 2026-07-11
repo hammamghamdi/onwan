@@ -1,3 +1,5 @@
+import type { ErrorEvent, EventHint } from "@sentry/nextjs";
+
 const sensitiveHeaderNames = new Set([
   "authorization",
   "cookie",
@@ -12,28 +14,12 @@ const sensitiveHeaderNames = new Set([
 const sensitiveTokenPattern =
   /\b(access_token|refresh_token|code|token|apikey)=([^&#\s]+)/gi;
 
-type SentryRequest = {
-  url?: unknown;
-  query_string?: unknown;
-  cookies?: unknown;
-  data?: unknown;
-  headers?: unknown;
-  [key: string]: unknown;
-};
-
-type SentryException = {
-  values?: unknown;
-  [key: string]: unknown;
-};
-
-type SentryLikeEvent = {
-  request?: SentryRequest;
-  user?: unknown;
-  message?: unknown;
-  breadcrumbs?: unknown;
-  exception?: SentryException;
-  [key: string]: unknown;
-};
+type SentryRequest = NonNullable<ErrorEvent["request"]>;
+type SentryHeaders = SentryRequest["headers"];
+type SentryBreadcrumbs = ErrorEvent["breadcrumbs"];
+type SentryExceptionValues = NonNullable<
+  NonNullable<ErrorEvent["exception"]>["values"]
+>;
 
 const stripUrlSecrets = (value: string) => {
   const withoutTokens = value.replace(
@@ -62,12 +48,12 @@ const stripUrlSecrets = (value: string) => {
   });
 };
 
-const sanitizeHeaders = (headers: unknown) => {
-  if (!headers || typeof headers !== "object") {
+const sanitizeHeaders = (headers: SentryHeaders): SentryHeaders => {
+  if (!headers) {
     return headers;
   }
 
-  const sanitized: Record<string, unknown> = {};
+  const sanitized: NonNullable<SentryHeaders> = {};
 
   for (const [name, value] of Object.entries(headers)) {
     if (sensitiveHeaderNames.has(name.toLowerCase())) {
@@ -98,8 +84,8 @@ const sanitizeRequestUrl = (url: string) => {
   }
 };
 
-const sanitizeBreadcrumbs = (breadcrumbs: unknown) => {
-  if (!Array.isArray(breadcrumbs)) {
+const sanitizeBreadcrumbs = (breadcrumbs: SentryBreadcrumbs) => {
+  if (!breadcrumbs) {
     return breadcrumbs;
   }
 
@@ -130,8 +116,8 @@ const sanitizeBreadcrumbs = (breadcrumbs: unknown) => {
   });
 };
 
-const sanitizeExceptionValues = (values: unknown) => {
-  if (!Array.isArray(values)) {
+const sanitizeExceptionValues = (values: SentryExceptionValues) => {
+  if (!values) {
     return values;
   }
 
@@ -150,7 +136,10 @@ const sanitizeExceptionValues = (values: unknown) => {
   });
 };
 
-export const sanitizeSentryEvent = <T extends SentryLikeEvent>(event: T) => {
+export const sanitizeSentryEvent = (
+  event: ErrorEvent,
+  _hint: EventHint
+): ErrorEvent | null => {
   if (event.request) {
     if (typeof event.request.url === "string") {
       event.request.url = sanitizeRequestUrl(event.request.url);
@@ -170,7 +159,7 @@ export const sanitizeSentryEvent = <T extends SentryLikeEvent>(event: T) => {
 
   event.breadcrumbs = sanitizeBreadcrumbs(event.breadcrumbs);
 
-  if (event.exception && typeof event.exception === "object") {
+  if (event.exception?.values) {
     event.exception.values = sanitizeExceptionValues(event.exception.values);
   }
 
