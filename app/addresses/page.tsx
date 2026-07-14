@@ -258,6 +258,12 @@ export default function AddressesPage() {
                     {text.view}
                   </Link>
 
+                  <Link
+                    href={`/addresses/${encodeURIComponent(address.username)}/edit`}
+                    className="block w-full rounded-xl border border-black py-4 text-center font-bold text-black"
+                  >
+                    {text.edit}
+                  </Link>
                 </section>
               );
             })}
