@@ -402,20 +402,25 @@ function SetupContent() {
     setMessage("");
 
     try {
-      const { data: existingProfile, error: duplicateCheckError } =
-        await supabase
-          .from("profiles")
-          .select("username")
-          .ilike("username", name)
-          .limit(1);
+      const duplicateCheckResponse = await fetch("/api/username-availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: name }),
+        cache: "no-store",
+      });
 
-      if (duplicateCheckError) {
-        console.log(duplicateCheckError);
+      if (!duplicateCheckResponse.ok) {
         setMessage(text.saveError);
         return;
       }
 
-      if (existingProfile && existingProfile.length > 0) {
+      const availability = (await duplicateCheckResponse.json()) as {
+        available?: boolean;
+      };
+
+      if (!availability.available) {
         setMessage(text.duplicateName);
         return;
       }

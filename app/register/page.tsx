@@ -133,21 +133,32 @@ export default function RegisterPage() {
 
     setChecking(true);
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username")
-      .ilike("username", name)
-      .limit(1);
+    let availability: { available?: boolean } = {};
 
-    setChecking(false);
+    try {
+      const response = await fetch("/api/username-availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: name }),
+        cache: "no-store",
+      });
 
-    if (error) {
-      console.log(error);
+      if (!response.ok) {
+        setErrorMessage(text.checkError);
+        return;
+      }
+
+      availability = (await response.json()) as { available?: boolean };
+    } catch {
       setErrorMessage(text.checkError);
       return;
+    } finally {
+      setChecking(false);
     }
 
-    if (data && data.length > 0) {
+    if (!availability.available) {
       setIsAvailable(false);
       return;
     }
